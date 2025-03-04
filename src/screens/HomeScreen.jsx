@@ -24,10 +24,6 @@ const HomeScreen = () => {
         return 'Bonsoir';
     });
 
-    if (loading || !isAuthenticated) {
-        return <LoadingScreen />
-    }
-
     // Contexte du calendrier pour accéder aux événements
     const { getUpcomingEvents, isLoading } = useCalendar();
     const { getLastAbsences } = useAbsences();
@@ -58,6 +54,10 @@ const HomeScreen = () => {
         // Nettoyer l'intervalle lors du démontage du composant
         return () => clearInterval(intervalId);
     }, [getUpcomingEvents]);
+
+    if (loading || !isAuthenticated) {
+        return <LoadingScreen />
+    }
 
     // Données fictives pour la démo
     const recentGrades = [
