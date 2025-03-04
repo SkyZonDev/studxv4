@@ -50,10 +50,13 @@ export const UserProvider = ({ children }) => {
                 // Vérifier d'abord la biométrie
                 const compatible = await LocalAuthentication.hasHardwareAsync();
                 const enrolled = await LocalAuthentication.isEnrolledAsync();
-                setIsBiometricAvailable(compatible && enrolled);
+                const biometricAvailable = compatible && enrolled;
+
+                // Mettre à jour l'état ET passer la valeur directement
+                setIsBiometricAvailable(biometricAvailable);
 
                 // Ensuite charger les données utilisateur
-                await loadStoredUserData();
+                await loadStoredUserData(biometricAvailable);
             } catch (err) {
                 console.error('Erreur lors de l\'initialisation:', err);
             }
@@ -66,7 +69,7 @@ export const UserProvider = ({ children }) => {
      * Charge les données utilisateur stockées au démarrage de l'application
      * Propose l'authentification biométrique si disponible
      */
-    const loadStoredUserData = async () => {
+    const loadStoredUserData = async (biometricAvailable) => {
         try {
             setLoading(true);
 
@@ -80,7 +83,7 @@ export const UserProvider = ({ children }) => {
                     setStoredUsername(username);
 
                     // Si la biométrie est disponible, proposer l'authentification biométrique
-                    if (isBiometricAvailable) {
+                    if (biometricAvailable) {
                         const biometricAuth = await authenticateWithBiometrics();
 
                         if (biometricAuth.success) {
