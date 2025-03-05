@@ -3,6 +3,7 @@
         "name": "StudX",
         "slug": "studxv4",
         "version": "1.0.0 Beta",
+        "buildId": "x8zpxPd4PzjTBf39pIg5",
         "orientation": "portrait",
         "icon": "./assets/studx.png",
         "userInterfaceStyle": "automatic",

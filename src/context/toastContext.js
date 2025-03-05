@@ -68,11 +68,34 @@ export const ToastProvider = ({
     }, [maxVisible]);
 
     const addToast = useCallback((
-        message,
-        type = ToastType.INFO,
-        options = {}
+        titleOrConfig,
+        descriptionOrType = null,
+        typeOrOptions = ToastType.INFO,
+        maybeOptions = {}
     ) => {
-        if (!message) return null;
+        // Déterminer si nous utilisons le nouveau format ou l'ancien
+        let title, description, type, options;
+
+        // Nouveau format: objet de configuration
+        if (typeof titleOrConfig === 'object' && titleOrConfig !== null) {
+            ({ title, description, type = ToastType.INFO, ...options } = titleOrConfig);
+        }
+        // Format intermédiaire: title, description, type, options
+        else if (typeof descriptionOrType === 'string' && typeof typeOrOptions === 'string') {
+            title = titleOrConfig;
+            description = descriptionOrType;
+            type = typeOrOptions;
+            options = maybeOptions;
+        }
+        // Ancien format: message (maintenant title), type, options
+        else {
+            title = titleOrConfig;
+            type = descriptionOrType || ToastType.INFO;
+            options = typeOrOptions || {};
+            // Le message est maintenant utilisé comme titre, pas de description
+        }
+
+        if (!title) return null;
 
         const {
             duration = DEFAULT_DURATION,
@@ -81,14 +104,24 @@ export const ToastProvider = ({
             data,
             action,
             isPersistent = false,
+            // Pour la rétrocompatibilité
+            message
         } = options;
+
+        // Si un message est fourni dans les options (ancien format), l'utiliser comme titre si aucun titre n'est défini
+        if (!title && message) {
+            title = message;
+        }
 
         // Assurer une durée minimale de 1 seconde ou 0 pour les toasts persistants
         const normalizedDuration = isPersistent ? 0 : Math.max(1000, duration);
 
         const newToast = {
             id: Date.now().toString(),
-            message,
+            title,
+            description,
+            // Pour la rétrocompatibilité, conserver le message
+            message: title,
             type,
             timestamp: Date.now(),
             duration: normalizedDuration,

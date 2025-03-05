@@ -25,66 +25,145 @@ export const useToast = () => {
 
     const { addToast, removeToast, removeAllToasts } = context;
 
-    // Méthodes d'aide pour chaque type de toast
-    const success = useCallback((message, options = {}) => {
-        return addToast(message, ToastType.SUCCESS, options);
+    // Fonction utilitaire pour traiter différents formats d'arguments
+    const normalizeArguments = (titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        // Si le premier argument est un objet avec une propriété title ou message
+        if (typeof titleOrConfig === 'object' && titleOrConfig !== null && (titleOrConfig.title || titleOrConfig.message)) {
+            return titleOrConfig;
+        }
+
+        // Si le second argument est une chaîne, c'est une description
+        if (typeof descriptionOrOptions === 'string') {
+            return {
+                title: titleOrConfig,
+                description: descriptionOrOptions,
+                ...maybeOptions
+            };
+        }
+
+        // Sinon, c'est un ancien appel: message (maintenant title), options
+        return {
+            title: titleOrConfig,
+            ...descriptionOrOptions
+        };
+    };
+
+    // Méthodes d'aide pour chaque type de toast avec support des deux formats
+    const success = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
+            type: ToastType.SUCCESS
+        });
     }, [addToast]);
 
-    const error = useCallback((message, options = {}) => {
-        return addToast(message, ToastType.ERROR, options);
+    const error = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
+            type: ToastType.ERROR
+        });
     }, [addToast]);
 
-    const warning = useCallback((message, options = {}) => {
-        return addToast(message, ToastType.WARNING, options);
+    const warning = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
+            type: ToastType.WARNING
+        });
     }, [addToast]);
 
-    const info = useCallback((message, options = {}) => {
-        return addToast(message, ToastType.INFO, options);
+    const info = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
+            type: ToastType.INFO
+        });
     }, [addToast]);
 
-    const refresh = useCallback((message, options = {}) => {
-        return addToast(message, ToastType.REFRESH, options);
+    const refresh = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
+            type: ToastType.REFRESH
+        });
     }, [addToast]);
 
-    // Méthode utilitaire pour créer un toast avec une action
-    const withAction = useCallback((message, actionText, onAction, options = {}) => {
-        return addToast(message, options.type || ToastType.INFO, {
-            ...options,
+    // Méthode utilitaire pour créer un toast avec une action - mise à jour pour le nouveau format
+    const withAction = useCallback((titleOrConfig, actionTextOrDescription, onActionOrActionText, optionsOrOnAction = {}, maybeOptions = {}) => {
+        // Si premier argument est un objet de configuration complète
+        if (typeof titleOrConfig === 'object' && titleOrConfig !== null && (titleOrConfig.title || titleOrConfig.message)) {
+            const { action, ...restConfig } = titleOrConfig;
+            return addToast({
+                ...restConfig,
+                action: action || {
+                    text: actionTextOrDescription,
+                    onPress: onActionOrActionText
+                }
+            });
+        }
+
+        // Si troisième argument est une fonction, c'est le nouveau format (title, description, onAction, options)
+        if (typeof onActionOrActionText === 'function') {
+            return addToast({
+                title: titleOrConfig,
+                description: actionTextOrDescription,
+                action: {
+                    text: optionsOrOnAction.actionText || "Action",
+                    onPress: onActionOrActionText
+                },
+                ...maybeOptions
+            });
+        }
+
+        // Sinon c'est l'ancien format (message, actionText, onAction, options)
+        return addToast({
+            title: titleOrConfig,
             action: {
-                text: actionText,
-                onPress: onAction
-            }
+                text: actionTextOrDescription,
+                onPress: onActionOrActionText
+            },
+            ...optionsOrOnAction
         });
     }, [addToast]);
 
     // Toast qui reste jusqu'à ce qu'on clique dessus
-    const persistent = useCallback((message, type = ToastType.INFO, options = {}) => {
-        return addToast(message, type, {
-            ...options,
+    const persistent = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
             isPersistent: true
         });
     }, [addToast]);
 
     // Toast éphémère très court (comme un feedback rapide)
-    const quick = useCallback((message, type = ToastType.SUCCESS, options = {}) => {
-        return addToast(message, type, {
-            ...options,
+    const quick = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
             duration: 1500
         });
     }, [addToast]);
 
     // Toast longue durée (pour les messages importants)
-    const long = useCallback((message, type = ToastType.INFO, options = {}) => {
-        return addToast(message, type, {
-            ...options,
+    const long = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
+        return addToast({
+            ...config,
             duration: 8000
         });
     }, [addToast]);
 
     // Toast de chargement qui sera remplacé par un autre toast
-    const loading = useCallback((message = "Chargement en cours...", options = {}) => {
-        const id = addToast(message, ToastType.REFRESH, {
-            ...options,
+    const loading = useCallback((titleOrConfig = "Chargement en cours...", descriptionOrOptions = {}, maybeOptions = {}) => {
+        // Si le premier argument est une chaîne, on le traite comme un titre
+        const config = typeof titleOrConfig === 'string'
+            ? { title: titleOrConfig, ...(typeof descriptionOrOptions === 'string' ? { description: descriptionOrOptions, ...maybeOptions } : descriptionOrOptions) }
+            : titleOrConfig;
+
+        const id = addToast({
+            ...config,
+            type: ToastType.REFRESH,
             isPersistent: true
         });
 
@@ -92,14 +171,14 @@ export const useToast = () => {
         return {
             id,
             // Remplace le toast de chargement par un toast de succès
-            success: (newMessage, newOptions = {}) => {
+            success: (newTitleOrConfig, newDescriptionOrOptions = {}, newMaybeOptions = {}) => {
                 removeToast(id);
-                return success(newMessage, newOptions);
+                return success(newTitleOrConfig, newDescriptionOrOptions, newMaybeOptions);
             },
             // Remplace le toast de chargement par un toast d'erreur
-            error: (newMessage, newOptions = {}) => {
+            error: (newTitleOrConfig, newDescriptionOrOptions = {}, newMaybeOptions = {}) => {
                 removeToast(id);
-                return error(newMessage, newOptions);
+                return error(newTitleOrConfig, newDescriptionOrOptions, newMaybeOptions);
             },
             // Juste supprimer le toast
             dismiss: () => removeToast(id)

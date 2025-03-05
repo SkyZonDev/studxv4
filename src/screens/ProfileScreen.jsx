@@ -21,14 +21,11 @@ const ProfileScreen = () => {
     const { colors, darkMode, toggleTheme } = useTheme();
     const insets = useSafeAreaInsets();
     const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
+    const buildId = Constants.expoConfig?.buildId || 'non disponible';
 
     const handleLogout = async () => {
         try {
             await logout();
-            toast.success('Déconnexion Réussi', {
-                duration: 3000,
-                position: toast.positions.TOP
-            })
         } catch (error) {
             toast.error(`Erreur lors de la déconnexion`, {
                 duration: 3000,
@@ -421,11 +418,11 @@ const ProfileScreen = () => {
                             'moon',
                             'Apparence',
                             preferences.appearance,
-                            toggleTheme,
+                            () => { }, // toggleTheme,
                             false,
                             <Switch
                                 value={darkMode}
-                                onValueChange={toggleTheme}
+                                onValueChange={() => { }} // toggleTheme
                                 trackColor={{ false: '#E0E0E0', true: '#4A6FE180' }}
                                 thumbColor={darkMode ? '#4A6FE1' : '#F5F5F5'}
                             />
@@ -496,6 +493,7 @@ const ProfileScreen = () => {
                 {/* Credits */}
                 <View style={styles.credits}>
                     <Text style={styles.creditsText}>StudX v{version}</Text>
+                    <Text>Build Version : {buildId}</Text>
                     <Text style={styles.creditsSubtext}>Développé par Jean-Pierre DUPUIS</Text>
                     <Text style={styles.creditsSubtext}>© {new Date().getFullYear()} Tous droits réservés</Text>
                 </View>

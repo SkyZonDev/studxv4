@@ -32,7 +32,7 @@ export const AbsencesContext = createContext();
 export const AbsencesProvider = ({ children }) => {
     // Récupérer les hooks nécessaires
     const { isAuthenticated, getAbsences, justifyAbsence } = useUser();
-    const { showToast } = useToast();
+    const toast = useToast();
 
     // États du contexte
     const [absences, setAbsences] = useState([]);
@@ -182,7 +182,6 @@ export const AbsencesProvider = ({ children }) => {
         // Si on n'est pas en train de forcer un rafraîchissement, on vérifie le cache
         if (!forceRefresh) {
             const cachedData = await loadFromStorage();
-
             if (cachedData && isCacheValid()) {
                 setAbsences(cachedData);
                 applyFilters(cachedData, searchQuery, filterPeriod);
@@ -195,9 +194,9 @@ export const AbsencesProvider = ({ children }) => {
             setIsLoading(true);
             setError(null);
 
-            const response = await getAbsences();
-            if (response.success) {
-                const data = response.data;
+            const { success, data , error } = await getAbsences();
+
+            if (success) {
                 setAbsences(data);
                 await saveToStorage(data);
                 applyFilters(data, searchQuery, filterPeriod);
@@ -205,7 +204,7 @@ export const AbsencesProvider = ({ children }) => {
                 setHasChanges(false);
                 return true;
             } else {
-                setError(response.error || 'Erreur lors du chargement des absences');
+                setError(error.title || 'Erreur lors du chargement des absences');
                 // Si on a des données en cache, on les utilise même si elles sont périmées
                 const cachedData = await loadFromStorage();
                 if (cachedData) {
@@ -214,36 +213,30 @@ export const AbsencesProvider = ({ children }) => {
                 }
                 setIsLoading(false);
 
-                showToast({
-                    type: ToastType.ERROR,
-                    message: 'Impossible de récupérer les absences',
-                    description: response.error || 'Veuillez réessayer plus tard'
+                toast.error({
+                    title: error.title,
+                    description: error.detail
                 });
 
-                return false;
+                return [];
             }
         } catch (err) {
-            console.error('Erreur lors de la récupération des absences:', err);
-            setError(err.message || 'Erreur inconnue');
-
             // Si on a des données en cache, on les utilise même si elles sont périmées
             const cachedData = await loadFromStorage();
             if (cachedData) {
                 setAbsences(cachedData);
                 applyFilters(cachedData, searchQuery, filterPeriod);
             }
-
             setIsLoading(false);
 
-            showToast({
-                type: ToastType.ERROR,
-                message: 'Erreur lors du chargement des absences',
-                description: err.message || 'Veuillez réessayer plus tard'
+            toast.error({
+                title: 'Erreur lors de la récupération des absences',
+                description: err.message
             });
 
             return false;
         }
-    }, [isAuthenticated, getAbsences, loadFromStorage, saveToStorage, isCacheValid, showToast, searchQuery, filterPeriod]);
+    }, [isAuthenticated, getAbsences, loadFromStorage, saveToStorage, isCacheValid, searchQuery, filterPeriod]);
 
     // Fonction pour rafraîchir les absences (pull-to-refresh)
     const refreshAbsences = useCallback(async () => {
@@ -312,11 +305,7 @@ export const AbsencesProvider = ({ children }) => {
     // Fonction pour justifier une absence
     const submitJustification = useCallback(async (absenceId, justificationFile) => {
         if (!isAuthenticated) {
-            showToast({
-                type: ToastType.ERROR,
-                message: 'Non authentifié',
-                description: 'Vous devez être connecté pour justifier une absence'
-            });
+            toast.error('Requête invalide - Non authentifié');
             return false;
         }
 
@@ -346,21 +335,13 @@ export const AbsencesProvider = ({ children }) => {
                 await saveToStorage(updatedAbsences);
                 applyFilters(updatedAbsences, searchQuery, filterPeriod);
 
-                showToast({
-                    type: ToastType.SUCCESS,
-                    message: 'Justificatif envoyé',
-                    description: 'Votre justificatif a été envoyé avec succès'
-                });
+                toast.success('Votre justificatif a été envoyé avec succès');
 
                 setHasChanges(true);
                 setIsLoading(false);
                 return true;
             } else {
-                showToast({
-                    type: ToastType.ERROR,
-                    message: 'Erreur lors de l\'envoi du justificatif',
-                    description: response.error || 'Veuillez réessayer plus tard'
-                });
+                toast.error('Veuillez réessayer plus tard');
 
                 setIsLoading(false);
                 return false;
@@ -368,16 +349,12 @@ export const AbsencesProvider = ({ children }) => {
         } catch (err) {
             console.error('Erreur lors de la justification de l\'absence:', err);
 
-            showToast({
-                type: ToastType.ERROR,
-                message: 'Erreur lors de l\'envoi du justificatif',
-                description: err.message || 'Veuillez réessayer plus tard'
-            });
+            toast.error(err.message || 'Veuillez réessayer plus tard'); // Erreur lors de l'envoi du message
 
             setIsLoading(false);
             return false;
         }
-    }, [isAuthenticated, justifyAbsence, absences, saveToStorage, showToast, searchQuery, filterPeriod, applyFilters]);
+    }, [isAuthenticated, justifyAbsence, absences, saveToStorage, searchQuery, filterPeriod, applyFilters]);
 
     // Fonction utilitaire pour calculer la durée totale des absences en heures
     const getTotalHours = useCallback((selectedAbsences) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,8 @@ import { useAbsences } from '../context/absencesContext';
 import { useUser } from '../hooks/useUser';
 import LoadingScreen from '../components/LoadingScreen';
 import ScheduleModal from '../components/modal/ScheduleModal';
+import { useGrades } from '../context/gradesContext';
+import GradesCard from '../components/card/GradesCard';
 
 const HomeScreen = () => {
     const { colors } = useTheme();
@@ -27,8 +29,10 @@ const HomeScreen = () => {
     // Contexte du calendrier pour accéder aux événements
     const { getUpcomingEvents, isLoading } = useCalendar();
     const { getLastAbsences } = useAbsences();
+    const { getTopThreeGrades } = useGrades();
 
     const recentAbsences = getLastAbsences(3);
+    const recentGrades = getTopThreeGrades();
 
     // État pour stocker les prochains cours
     const [upcomingCourses, setUpcomingCourses] = useState([]);
@@ -58,13 +62,6 @@ const HomeScreen = () => {
     if (loading || !isAuthenticated) {
         return <LoadingScreen />
     }
-
-    // Données fictives pour la démo
-    const recentGrades = [
-        // { id: 1, course: 'Physique', grade: '16/20', date: '15/02/2025' },
-        // { id: 2, course: 'Anglais', grade: '14/20', date: '10/02/2025' },
-    ];
-
 
     const predefinedCourses = {
         '(Campus Vaise) TD Parcours Ouverture Innovation 1': 'TD Parcours Inno'
@@ -224,17 +221,14 @@ const HomeScreen = () => {
                     </View>
 
                     {recentGrades.length > 0 ? (
-                        recentGrades.map(grade => (
-                            <View key={grade.id} style={styles.gradeItem}>
-                                <View style={styles.gradeCircle}>
-                                    <Text style={styles.gradeText}>{grade.grade.split('/')[0]}</Text>
-                                </View>
-                                <View style={styles.gradeDetails}>
-                                    <Text style={styles.gradeCourse}>{grade.course}</Text>
-                                    <Text style={styles.gradeDate}>{grade.date}</Text>
-                                </View>
-                            </View>
-                        ))
+                        <FlatList
+                            data={recentGrades}
+                            renderItem={GradesCard}
+                            keyExtractor={item => item.id.toString()}
+                            contentContainerStyle={styles.gradesList}
+                            // ListEmptyComponent={renderEmptyGrades}
+                            scrollEnabled={false}
+                        />
                     ) : (
                         <View style={styles.noGradecontainer}>
                             <View style={styles.noGradeIconContainer}>

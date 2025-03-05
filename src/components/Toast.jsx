@@ -6,7 +6,9 @@ import { ANIMATION_DURATION, ToastType, ToastPosition } from '../hooks/useToast'
 
 const ToastComponent = ({
     id,
-    message,
+    title, // Nouveau - obligatoire
+    description, // Nouveau - optionnel
+    message, // Maintenu pour rétrocompatibilité
     type,
     onHide,
     index = 0,
@@ -16,14 +18,14 @@ const ToastComponent = ({
     action,
     data,
     isPersistent = false,
-    onHeightChange, // Nouvelle prop pour communiquer la hauteur
-    heightOffset = 0 // Nouvelle prop pour l'offset basé sur les toasts précédents
+    onHeightChange, // Prop pour communiquer la hauteur
+    heightOffset = 0 // Prop pour l'offset basé sur les toasts précédents
 }) => {
     const translateY = useRef(new Animated.Value(position === ToastPosition.BOTTOM ? 100 : -100)).current;
     const opacity = useRef(new Animated.Value(0)).current;
     const scale = useRef(new Animated.Value(0.8)).current;
     const progress = useRef(new Animated.Value(0)).current;
-    const [toastHeight, setToastHeight] = useState(0); // Nouvel état pour stocker la hauteur
+    const [toastHeight, setToastHeight] = useState(0); // État pour stocker la hauteur
 
     // État pour suivre si le toast est en train d'être supprimé
     const [isExiting, setIsExiting] = useState(false);
@@ -199,6 +201,9 @@ const ToastComponent = ({
         }
     };
 
+    // Utilise le titre s'il est fourni, sinon utilise le message pour la rétrocompatibilité
+    const displayTitle = title || message;
+
     return (
         <Animated.View
             style={[
@@ -234,7 +239,12 @@ const ToastComponent = ({
                 android_ripple={isPersistent ? { color: 'rgba(255,255,255,0.2)' } : null}
             >
                 <View style={styles.iconContainer}>{getIcon()}</View>
-                <Text style={styles.message} numberOfLines={3}>{message}</Text>
+                <View style={styles.textContainer}>
+                    <Text style={styles.title} numberOfLines={1}>{displayTitle}</Text>
+                    {description && (
+                        <Text style={styles.description} numberOfLines={2}>{description}</Text>
+                    )}
+                </View>
                 {!isPersistent && (
                     <TouchableOpacity
                         onPress={handleHide}
@@ -300,11 +310,20 @@ const styles = StyleSheet.create({
     iconContainer: {
         marginRight: 12,
     },
-    message: {
+    textContainer: {
+        flex: 1,
+    },
+    title: {
         color: '#FFFFFF',
         fontSize: 16,
-        flex: 1,
-        fontWeight: '600',
+        fontWeight: '700',
+    },
+    description: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '400',
+        marginTop: 4,
+        opacity: 0.9,
     },
     closeButton: {
         marginLeft: 8,

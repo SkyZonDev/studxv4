@@ -1,3 +1,7 @@
+import Constants from 'expo-constants';
+const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
+
+
 class ApiClient {
     constructor(baseUrl = '', defaultOptions = {}) {
         this.baseUrl = baseUrl;
@@ -5,6 +9,7 @@ class ApiClient {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                'x-app-version': version
             },
             timeout: 30000, // 30 secondes par défaut
             ...defaultOptions
@@ -46,10 +51,10 @@ class ApiClient {
                 this._timeoutPromise(timeout)
             ]);
 
-            // Vérification du statut de la réponse
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
-            }
+            // // Vérification du statut de la réponse
+            // if (!response.ok) {
+            //     throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+            // }
 
             // Détection du type de contenu pour la réponse
             const contentType = response.headers.get('content-type');
@@ -186,6 +191,35 @@ class ApiClient {
         this.responseInterceptor = interceptor;
         return this;
     }
+
+    /**
+     * Gestionnaire de réponses API avec détection intelligente
+     * @param {Object} apiResponse - La réponse complète de l'API
+     * @returns {Object} Un objet standardisé avec le statut, le message et le type d'erreur
+     */
+    static handleApiResponse = (apiResponse) => {
+        // Cas où la réponse est un succès
+        if (apiResponse.status.code >= 200 && apiResponse.status.code < 300) {
+            return {
+                success: true,
+                data: apiResponse.data,
+                title: apiResponse.status.message || 'Opération réussie'
+            };
+        }
+
+        // Gestion des erreurs
+        const errors = apiResponse.errors || [];
+        const firstError = errors.length > 0 ? errors[0] : null;
+
+        return {
+            success: false,
+            statusCode: apiResponse.status.code,
+            errorCode: firstError.code,
+            title: firstError.title,
+            detail: firstError ? firstError.detail : apiResponse.status.message,
+            source: firstError.source
+        };
+    };
 }
 
 export default ApiClient;

@@ -9,6 +9,7 @@ import { UserProvider } from '../context/userContext';
 import ToastProvider from '../context/toastContext';
 import { AbsencesProvider } from '../context/absencesContext';
 import { CalendarProvider } from '../context/calendarContext';
+import { GradeProvider } from '../context/gradesContext';
 import { useTheme } from '../context/themeContext';
 import { useUser } from '../hooks/useUser';
 
@@ -145,7 +146,9 @@ const AppNavigation = () => {
                         <UserProvider>
                             <CalendarProvider>
                                 <AbsencesProvider>
-                                    <Navigation />
+                                    <GradeProvider>
+                                        <Navigation />
+                                    </GradeProvider>
                                 </AbsencesProvider>
                             </CalendarProvider>
                         </UserProvider>
