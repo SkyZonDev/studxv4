@@ -61,8 +61,6 @@ const ProfileScreen = () => {
     );
 
     const goToSettingPage = (path) => {
-        toast.info('Page en développement');
-        return;
         navigation.navigate(path);
     };
 
@@ -428,8 +426,8 @@ const ProfileScreen = () => {
                             />
                         )}
                         {renderSettingItem('language', 'Langue', preferences.language, () => { })}
-                        {renderSettingItem('lock-closed', 'Confidentialité', '', () => goToSettingPage('privacy'))}
-                        {renderSettingItem('shield-checkmark', 'Sécurité', '', () => goToSettingPage('security'), true)}
+                        {renderSettingItem('lock-closed', 'Confidentialité', '', () => goToSettingPage('Privacy'))}
+                        {renderSettingItem('shield-checkmark', 'Sécurité', '', () => goToSettingPage('Security'), true)}
                     </View>
                 </View>
 
@@ -437,8 +435,8 @@ const ProfileScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Support</Text>
                     <View style={styles.card}>
-                        {renderSettingItem('help-circle', 'Aide et assistance', '', () => goToSettingPage('help'))}
-                        {renderSettingItem('mail', 'Contacter le support', '', () => goToSettingPage('support'), true)}
+                        {renderSettingItem('help-circle', 'Aide et assistance', '', () => goToSettingPage('Help'))}
+                        {renderSettingItem('mail', 'Contacter le support', '', () => goToSettingPage('Support'), true)}
                     </View>
                 </View>
 

@@ -29,7 +29,7 @@ export const useUser = () => useContext(UserContext);
  */
 export const UserProvider = ({ children }) => {
     // Initialisation du service utilisateur
-    const userService = new UserService('http://192.168.1.103:4576/api/v1');
+    const userService = new UserService();
     const toast = useToast();
 
     // États de gestion utilisateur
