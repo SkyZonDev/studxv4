@@ -5,6 +5,10 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import UserService from '../services/userService';
 import { useToast } from '../hooks/useToast';
 import ApiClient from '../services/apiClient';
+import { Linking } from 'react-native';
+import Constants from 'expo-constants';
+
+const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
 
 // Clés pour le stockage sécurisé des données dans SecureStore
 const STORAGE_KEYS = {
@@ -465,6 +469,30 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const getUpdate = async () => {
+        try {
+            setError(null);
+            const result = await userService.getUpdate();
+            if (result.errors.length > 0) return
+
+            const data = result.data[`last_release_${version.split(' ')[1].toLowerCase()}`]
+
+            if (data.version === version) return
+            toast.withAction(
+                'Nouvelle version disponible',
+                `La version ${data.version} est disponible, de nouvelle amélioration on été rajouté`,
+                () => Linking.openURL('https://studx.ddns.net/'),
+                {
+                    actionText: 'Allez voir 👀'
+                }, {
+                    isPersistent: true
+                }
+            )
+        } catch (error) {
+
+        }
+    }
+
     // Valeurs exposées par le contexte
     const contextValue = {
         // États
@@ -484,7 +512,8 @@ export const UserProvider = ({ children }) => {
         getCalendar,
         getCalendarKey,
         getAbsences,
-        getGrades
+        getGrades,
+        getUpdate
     };
 
     return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;

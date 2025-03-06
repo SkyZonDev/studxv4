@@ -102,6 +102,15 @@ class UserService {
             }
         });
     }
+
+    /**
+     * @description Récupère la dernière version disponible de l'application
+     */
+    getUpdate() {
+        return this.apiClient.get({
+            path: '/app/releases/latest'
+        })
+    }
 }
 
 export default UserService;

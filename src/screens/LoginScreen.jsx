@@ -75,6 +75,11 @@ const LoginScreen = () => {
         };
     }, [modalVisible, timer]);
 
+    // Search for new update available
+    useEffect(() => {
+
+    });
+
     const validateEmail = (email) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
@@ -282,9 +287,6 @@ const LoginScreen = () => {
                             </TouchableOpacity>
                         </>
                     )}
-
-                    {/* Affichage des erreurs du contexte */}
-                    {error && <Text style={styles.errorText}>{error}</Text>}
                 </Animated.View>
 
                 <View style={styles.footer}>
