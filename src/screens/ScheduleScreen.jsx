@@ -79,12 +79,8 @@ const ScheduleScreen = () => {
     const [currentTimePosition, setCurrentTimePosition] = useState(0);
     const [timeIndicatorVisible, setTimeIndicatorVisible] = useState(false);
 
-
     // État pour le mode d'affichage (grille ou liste)
     const [viewMode, setViewMode] = useState('list'); // 'grid' ou 'list'
-
-    // Obtenir le libellé du jour sélectionné (Lun, Mar, etc.)
-    const selectedDayLabel = getDayLabel(selectedDate);
 
     // Filtrer les cours par date sélectionnée
     const daySchedule = getEventsForDate(selectedDate);
@@ -452,7 +448,7 @@ const ScheduleScreen = () => {
                     {/* Section pour les cours du jour */}
                     <View style={styles.sectionContainer}>
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Aujourd'hui - {getFullDay(getDayLabel(selectedDate) || isActualNextCalendarDay(currentDate) ? 'Dimanche' : 'Samedi')}</Text>
+                                <Text style={styles.sectionTitle}>Aujourd'hui - {DAYS.includes(getDayLabel(selectedDate)) ? getFullDay(getDayLabel(selectedDate)) : (isActualNextCalendarDay(currentDate) ? 'Dimanche' : 'Samedi')}</Text>
                             <Text style={styles.sectionDate}>{format(selectedDate, 'd MMM yyyy')}</Text>
                         </View>
 

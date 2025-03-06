@@ -67,18 +67,18 @@ export const CalendarProvider = ({ children }) => {
                 return storedUrl;
             } else if (isAuthenticated) {
                 // Si l'URL n'est pas stockée, la récupérer via l'API
-                const result = await getCalendarKey();
+                const { success, data, error } = await getCalendarKey();
 
-                if (result.success && result.data) {
+                if (success && data) {
                     // Supposons que result.data contient l'URL ou la clé nécessaire
                     // Format attendu: { url: 'http://example.com/calendar' } ou { key: 'a12f2f0f-...' }
                     let newUrl;
 
-                    if (result.data.url) {
-                        newUrl = result.data.url;
-                    } else if (result.data.key) {
+                    if (data.url) {
+                        newUrl = data.url;
+                    } else if (data.key) {
                         // Construire l'URL avec la clé fournie
-                        newUrl = `${result.data.key}`;
+                        newUrl = `${data.key}`;
                     } else {
                         throw new Error('Format de données invalide pour la clé de calendrier');
                     }
@@ -88,15 +88,17 @@ export const CalendarProvider = ({ children }) => {
                     setCalendarApiUrl(newUrl);
                     return newUrl;
                 } else {
-                    throw new Error(result.error || 'Impossible de récupérer la clé du calendrier');
+                    return toast.error({
+                        title: error.title,
+                        description: error.detail
+                    });
                 }
             } else {
                 // L'utilisateur n'est pas authentifié
                 return null;
             }
         } catch (err) {
-            console.error('Erreur lors de la récupération de l\'URL du calendrier:', err);
-            setError(err.message);
+            toast.error(err.message);
             return null;
         }
     };
@@ -120,9 +122,12 @@ export const CalendarProvider = ({ children }) => {
                 throw new Error('URL du calendrier non disponible');
             }
 
-            const { success, data } = await getCalendar(apiUrl);
+            const { success, data, error } = await getCalendar(apiUrl);
             if (!success) {
-                throw new Error('Erreur lors de la récupération de l\'emploi du temps');
+                return toast.error({
+                    title: error.title,
+                    description: error.detail
+                });
             }
 
             // Si nous vérifions les changements, comparer avec les données stockées
@@ -150,8 +155,9 @@ export const CalendarProvider = ({ children }) => {
 
             return data.events;
         } catch (err) {
-            setError(err.message);
+            // setError(err.message);
             console.error('Erreur:', err);
+            toast.error(err.message);
         } finally {
             setIsLoading(false);
         }

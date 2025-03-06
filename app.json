@@ -1,39 +1,40 @@
 {
-    "expo": {
-        "name": "StudX",
-        "slug": "studxv4",
-        "version": "1.0.0 Beta",
-        "orientation": "portrait",
-        "icon": "./assets/studx.png",
-        "userInterfaceStyle": "automatic",
-        "newArchEnabled": true,
-        "jsEngine": "hermes",
-        "splash": {
-            "image": "./assets/studx.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#000"
-        },
-        "ios": {
-            "supportsTablet": false
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/studx.png",
-                "backgroundColor": "#000"
-            },
-            "package": "com.skyzondev.studx"
-        },
-        "web": {
-            "favicon": "./assets/studx.png"
-        },
-        "plugins": [
-            "expo-secure-store"
-        ],
-        "extra": {
-            "eas": {
-                "projectId": "9e6c0243-aaa9-4870-9db2-86cc9baf82dd"
-            }
-        },
-        "owner": "skyzondev"
-    }
+  "expo": {
+    "name": "StudX",
+    "slug": "studxv4",
+    "version": "1.0.0 Beta",
+    "buildId": "x8zpxPd4PzjTBf39pIg5",
+    "orientation": "portrait",
+    "icon": "./assets/studx.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "jsEngine": "hermes",
+    "splash": {
+      "image": "./assets/studx.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/studx.png",
+        "backgroundColor": "#000"
+      },
+      "package": "com.skyzondev.studx"
+    },
+    "web": {
+      "favicon": "./assets/studx.png"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "66e8e269-acd1-4280-a38d-9844fe013cac"
+      }
+    },
+    "owner": "skyzondev"
+  }
 }

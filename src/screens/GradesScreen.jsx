@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
     View,
     Text,
@@ -7,7 +7,8 @@ import {
     ScrollView,
     SafeAreaView,
     StatusBar,
-    FlatList
+    FlatList,
+    RefreshControl
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,78 +18,64 @@ import { useNavigation } from '@react-navigation/native';
 import LoadingScreen from '../components/LoadingScreen';
 import { useUser } from '../hooks/useUser';
 import ModernLoader from '../components/ModernLoader';
-import ConstructionPage from '../components/underConstruction';
+import { useGrades } from '../context/gradesContext';
+import { useFocusEffect } from '@react-navigation/native';
+import GradesCard from '../components/card/GradesCard';
 
 const GradesScreen = () => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { userData, loading, isAuthenticated } = useUser();
+    const { loading, isAuthenticated } = useUser();
 
-    return (<ConstructionPage />)
+    // Utilisation du contexte grades au lieu d'états locaux
+    const {
+        isLoading,
+        error,
+        formattedGrades,
+        semesters,
+        currentSemester,
+        setCurrentSemester,
+        courses,
+        selectedCourse,
+        setSelectedCourse,
+        calculateAverageGrade,
+        calculateBestGrade,
+        calculateLowestGrade,
+        getFilteredGrades,
+        refreshGrades,
+        lastUpdated,
+        getFormattedLastUpdated
+    } = useGrades();
 
-    const [selectedSemester, setSelectedSemester] = useState('Semestre 2');
-    const [gradesLoading, setGradesLoading] = useState(true);
-    const [grades, setGrades] = useState([]);
-    const [courses, setCourses] = useState([]);
-    const [selectedCourse, setSelectedCourse] = useState('Toutes les matières');
+    // Rafraîchir les données quand l'écran est affiché
+    useFocusEffect(
+        useCallback(() => {
+            // Si les données n'ont pas été mises à jour depuis plus d'une heure,
+            // rafraîchir automatiquement
+            if (lastUpdated) {
+                const lastUpdate = new Date(lastUpdated);
+                const oneHourAgo = new Date();
+                oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
-    useEffect(() => {
-        // Simulation du chargement des données de notes
-        const timer = setTimeout(() => {
-            // Données fictives pour la démo
-            const demoGrades = [
-                { id: 1, course: 'Mathématiques', grade: '16/20', date: '15/02/2025', coefficient: 3, average: '14.2/20', maxGrade: '18/20', minGrade: '8/20', semester: 'Semestre 2' },
-                { id: 2, course: 'Physique', grade: '14.5/20', date: '10/02/2025', coefficient: 2, average: '13.8/20', maxGrade: '17/20', minGrade: '9/20', semester: 'Semestre 2' },
-                { id: 3, course: 'Anglais', grade: '17/20', date: '05/02/2025', coefficient: 1, average: '15.5/20', maxGrade: '19/20', minGrade: '11/20', semester: 'Semestre 2' },
-                { id: 4, course: 'Informatique', grade: '18/20', date: '01/02/2025', coefficient: 3, average: '16.2/20', maxGrade: '20/20', minGrade: '12/20', semester: 'Semestre 2' },
-                { id: 5, course: 'Chimie', grade: '15/20', date: '20/01/2025', coefficient: 2, average: '14.8/20', maxGrade: '18.5/20', minGrade: '10/20', semester: 'Semestre 2' },
-                { id: 6, course: 'Histoire', grade: '13.5/20', date: '18/01/2025', coefficient: 1, average: '12.9/20', maxGrade: '16/20', minGrade: '8.5/20', semester: 'Semestre 1' },
-                { id: 7, course: 'Géographie', grade: '14/20', date: '15/01/2025', coefficient: 1, average: '13.2/20', maxGrade: '17/20', minGrade: '9/20', semester: 'Semestre 1' },
-                { id: 8, course: 'Économie', grade: '15.5/20', date: '10/01/2025', coefficient: 2, average: '14.1/20', maxGrade: '18/20', minGrade: '10.5/20', semester: 'Semestre 1' },
-                { id: 9, course: 'Philosophie', grade: '16/20', date: '05/01/2025', coefficient: 2, average: '15.3/20', maxGrade: '19/20', minGrade: '11/20', semester: 'Semestre 1' },
-                { id: 10, course: 'Art', grade: '18/20', date: '20/12/2024', coefficient: 1, average: '17.2/20', maxGrade: '19.5/20', minGrade: '14/20', semester: 'Semestre 1' }
-            ];
+                if (lastUpdate < oneHourAgo) {
+                    refreshGrades();
+                }
+            }
+        }, [lastUpdated])
+    );
 
-            setGrades(demoGrades);
-
-            // Extraction des matières uniques pour le filtre
-            const uniqueCourses = [...new Set(demoGrades.map(grade => grade.course))];
-            setCourses(['Toutes les matières', ...uniqueCourses]);
-
-            setGradesLoading(false);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, []);
+    // Fonction pour rafraîchir les notes (pull-to-refresh)
+    const onRefresh = useCallback(() => {
+        refreshGrades();
+    }, [refreshGrades]);
 
     if (loading || !isAuthenticated) {
         return <LoadingScreen />;
     }
 
-    const filteredGrades = grades.filter(grade => {
-        const semesterMatch = grade.semester === selectedSemester;
-        const courseMatch = !selectedCourse || selectedCourse === 'Toutes les matières' || grade.course === selectedCourse;
-        return semesterMatch && courseMatch;
-    });
-
-    const calculateSemesterAverage = () => {
-        const semesterGrades = grades.filter(grade => grade.semester === selectedSemester);
-
-        if (semesterGrades.length === 0) return '0/20';
-
-        const totalPoints = semesterGrades.reduce((sum, grade) => {
-            const gradeValue = parseFloat(grade.grade.split('/')[0].replace(',', '.'));
-            return sum + (gradeValue * grade.coefficient);
-        }, 0);
-
-        const totalCoefficients = semesterGrades.reduce((sum, grade) => sum + grade.coefficient, 0);
-
-        if (totalCoefficients === 0) return '0/20';
-
-        const average = (totalPoints / totalCoefficients).toFixed(1);
-        return average;
-    };
+    // Filtrer les notes selon le semestre et la matière sélectionnés
+    const filteredGrades = getFilteredGrades(currentSemester, selectedCourse);
 
     const renderEmptyGrades = () => (
         <View style={styles.emptyCard}>
@@ -104,37 +91,17 @@ const GradesScreen = () => {
         </View>
     );
 
-    const renderGradeItem = ({ item }) => (
-        <TouchableOpacity style={styles.gradeItem}>
-            <View style={styles.gradeHeader}>
-                <View style={styles.gradeCircle}>
-                    <Text style={styles.gradeText}>{item.grade.split('/')[0]}</Text>
-                </View>
-                <View style={styles.gradeDetails}>
-                    <Text style={styles.gradeCourse}>{item.course}</Text>
-                    <Text style={styles.gradeDate}>{item.date}</Text>
-                </View>
-                <View style={styles.coefficientBadge}>
-                    <Text style={styles.coefficientText}>Coeff. {item.coefficient}</Text>
-                </View>
-            </View>
+    const renderFooter = () => {
+        if (filteredGrades.length === 0) return null;
 
-            <View style={styles.gradeStats}>
-                <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Moyenne classe</Text>
-                    <Text style={styles.statValue}>{item.average}</Text>
-                </View>
-                <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Note max</Text>
-                    <Text style={styles.statValue}>{item.maxGrade}</Text>
-                </View>
-                <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Note min</Text>
-                    <Text style={styles.statValue}>{item.minGrade}</Text>
-                </View>
+        return (
+            <View style={styles.footer}>
+                <Text style={styles.lastUpdated}>
+                    Dernière mise à jour : {getFormattedLastUpdated()}
+                </Text>
             </View>
-        </TouchableOpacity>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -157,31 +124,21 @@ const GradesScreen = () => {
 
                 {/* Semester selector */}
                 <View style={styles.semesterSelector}>
-                    <TouchableOpacity
-                        style={[
-                            styles.semesterButton,
-                            selectedSemester === 'Semestre 1' && styles.selectedSemesterButton
-                        ]}
-                        onPress={() => setSelectedSemester('Semestre 1')}
-                    >
-                        <Text style={[
-                            styles.semesterButtonText,
-                            selectedSemester === 'Semestre 1' && styles.selectedSemesterText
-                        ]}>Semestre 1</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.semesterButton,
-                            selectedSemester === 'Semestre 2' && styles.selectedSemesterButton
-                        ]}
-                        onPress={() => setSelectedSemester('Semestre 2')}
-                    >
-                        <Text style={[
-                            styles.semesterButtonText,
-                            selectedSemester === 'Semestre 2' && styles.selectedSemesterText
-                        ]}>Semestre 2</Text>
-                    </TouchableOpacity>
+                    {semesters.map((semester) => (
+                        <TouchableOpacity
+                            key={semester}
+                            style={[
+                                styles.semesterButton,
+                                currentSemester === semester && styles.selectedSemesterButton
+                            ]}
+                            onPress={() => setCurrentSemester(semester)}
+                        >
+                            <Text style={[
+                                styles.semesterButtonText,
+                                currentSemester === semester && styles.selectedSemesterText
+                            ]}>{semester}</Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </LinearGradient>
 
@@ -189,15 +146,21 @@ const GradesScreen = () => {
                 {/* Average Card */}
                 <View style={styles.averageContainer}>
                     <View style={[styles.averageCard, { backgroundColor: '#4A6FE120' }]}>
-                        <Text style={[styles.averageValue, { color: '#4A6FE1' }]}>{calculateSemesterAverage()}</Text>
+                        <Text style={[styles.averageValue, { color: '#4A6FE1' }]}>
+                            {calculateAverageGrade(selectedCourse, currentSemester)}
+                        </Text>
                         <Text style={[styles.averageLabel, { color: '#4A6FE1' }]}>Moyenne générale</Text>
                     </View>
                     <View style={[styles.averageCard, { backgroundColor: '#66BB6A20' }]}>
-                        <Text style={[styles.averageValue, { color: '#66BB6A' }]}>{calculateSemesterAverage()}</Text>
+                        <Text style={[styles.averageValue, { color: '#66BB6A' }]}>
+                            {calculateBestGrade(currentSemester)}
+                        </Text>
                         <Text style={[styles.averageLabel, { color: '#66BB6A' }]}>Meilleure note</Text>
                     </View>
                     <View style={[styles.averageCard, { backgroundColor: '#FF8A6520' }]}>
-                        <Text style={[styles.averageValue, { color: '#FF8A65' }]}>{calculateSemesterAverage()}</Text>
+                        <Text style={[styles.averageValue, { color: '#FF8A65' }]}>
+                            {calculateLowestGrade(currentSemester)}
+                        </Text>
                         <Text style={[styles.averageLabel, { color: '#FF8A65' }]}>Note la plus basse</Text>
                     </View>
                 </View>
@@ -229,17 +192,36 @@ const GradesScreen = () => {
                 </ScrollView>
 
                 {/* Grades List */}
-                {gradesLoading ? (
+                {isLoading ? (
                     <ModernLoader title="Chargement des notes..." />
                 ) : (
-                    <FlatList
-                        data={filteredGrades}
-                        renderItem={renderGradeItem}
-                        keyExtractor={item => item.id.toString()}
-                        contentContainerStyle={styles.gradesList}
-                        ListEmptyComponent={renderEmptyGrades}
-                        showsVerticalScrollIndicator={false}
-                    />
+                    filteredGrades || filteredGrades.length > 0 ? (
+                            <FlatList
+                                data={filteredGrades}
+                                renderItem={GradesCard}
+                                keyExtractor={item => item.id.toString()}
+                                contentContainerStyle={styles.gradesList}
+                                ListEmptyComponent={renderEmptyGrades}
+                                ListFooterComponent={renderFooter}
+                                showsVerticalScrollIndicator={false}
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={isLoading}
+                                        onRefresh={onRefresh}
+                                        colors={['#4A6FE1']}
+                                        tintColor={'#4A6FE1'}
+                                    />
+                                }
+                            />
+                    ) : (
+                        <View style={styles.noGradecontainer}>
+                            <View style={styles.noGradeIconContainer}>
+                                <Ionicons name="document-text-outline" size={48} color="#8e9aaf" />
+                            </View>
+                            <Text style={styles.noGradeTitle}>Aucune note disponible</Text>
+                            <Text style={styles.noGradeSubtitle}>Vos notes apparaîtront ici dès qu'elles seront publiées</Text>
+                        </View>
+                    )
                 )}
             </View>
         </SafeAreaView>
@@ -365,83 +347,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     gradesList: {
-        paddingBottom: 20,
-    },
-    gradeItem: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-        overflow: 'hidden',
-    },
-    gradeHeader: {
-        flexDirection: 'row',
-        padding: 15,
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    gradeCircle: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        backgroundColor: '#FF8A6520',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 14,
-    },
-    gradeText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#FF8A65',
-    },
-    gradeDetails: {
-        flex: 1,
-    },
-    gradeCourse: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-    },
-    gradeDate: {
-        fontSize: 12,
-        color: '#757575',
-    },
-    coefficientBadge: {
-        backgroundColor: '#E6EFFF',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 4,
-    },
-    coefficientText: {
-        fontSize: 12,
-        color: '#4A6FE1',
-        fontWeight: '500',
-    },
-    gradeStats: {
-        flexDirection: 'row',
-        padding: 10,
-        backgroundColor: '#FAFAFA',
-    },
-    statItem: {
-        flex: 1,
-        alignItems: 'center',
-        padding: 5,
-    },
-    statLabel: {
-        fontSize: 12,
-        color: '#757575',
-        marginBottom: 2,
-    },
-    statValue: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#333',
+        paddingBottom: 80,
     },
     emptyCard: {
         backgroundColor: '#FFFFFF',
@@ -480,6 +386,51 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
+    },
+    footer: {
+        marginTop: 15,
+        marginBottom: 25,
+        alignItems: 'center',
+    },
+    lastUpdated: {
+        fontSize: 12,
+        color: '#757575',
+        fontStyle: 'italic',
+    },
+
+    // Style carte Notes
+    noGradecontainer: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 24,
+        marginVertical: 12,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    noGradeIconContainer: {
+        backgroundColor: '#f1f3f8',
+        borderRadius: 50,
+        width: 80,
+        height: 80,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    noGradeTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#3d405b',
+        marginBottom: 8,
+    },
+    noGradeSubtitle: {
+        fontSize: 14,
+        color: '#8e9aaf',
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });
 

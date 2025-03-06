@@ -9,6 +9,7 @@ import { UserProvider } from '../context/userContext';
 import ToastProvider from '../context/toastContext';
 import { AbsencesProvider } from '../context/absencesContext';
 import { CalendarProvider } from '../context/calendarContext';
+import { GradeProvider } from '../context/gradesContext';
 import { useTheme } from '../context/themeContext';
 import { useUser } from '../hooks/useUser';
 
@@ -24,10 +25,81 @@ import GradesScreen from '../screens/GradesScreen';
 import AbsencesScreen from '../screens/AbsencesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
+// Import sub screen
+import HelpScreen from '../screens/profile/help';
+import SecurityScreen from '../screens/profile/security';
+import SupportScreen from '../screens/profile/support';
+import PrivacyScreen from '../screens/profile/privacy';
+
 
 // Create the navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const ProfileStack = createNativeStackNavigator();
+
+const ProfileNavigator = () => {
+    const { colors } = useTheme();
+
+    return (
+        <ProfileStack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.background,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border || 'rgba(0,0,0,0.1)',
+                },
+                headerTintColor: colors.text.primary,
+                headerTitleStyle: {
+                    fontWeight: '600',
+                },
+                animation: 'slide_from_right',
+            }}
+        >
+            <ProfileStack.Screen
+                name="ProfileMain"
+                component={ProfileScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Profil'
+                }}
+            />
+            <ProfileStack.Screen
+                name="Privacy"
+                component={PrivacyScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Confidentialité'
+                }}
+            />
+            <ProfileStack.Screen
+                name="Security"
+                component={SecurityScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Sécurité'
+                }}
+            />
+            <ProfileStack.Screen
+                name="Support"
+                component={SupportScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Support'
+                }}
+            />
+            <ProfileStack.Screen
+                name="Help"
+                component={HelpScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Aide'
+                }}
+            />
+        </ProfileStack.Navigator>
+    );
+};
 
 // TabNavigator for authenticated routes
 const TabNavigator = () => {
@@ -90,7 +162,7 @@ const TabNavigator = () => {
         />
         <Tab.Screen
             name="profile"
-            component={ProfileScreen}
+            component={ProfileNavigator}
             options={{
                 title: 'Profil',
                 tabBarLabel: 'Profil',
@@ -145,7 +217,9 @@ const AppNavigation = () => {
                         <UserProvider>
                             <CalendarProvider>
                                 <AbsencesProvider>
-                                    <Navigation />
+                                    <GradeProvider>
+                                        <Navigation />
+                                    </GradeProvider>
                                 </AbsencesProvider>
                             </CalendarProvider>
                         </UserProvider>
