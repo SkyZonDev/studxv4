@@ -1,6 +1,7 @@
 // ./src/context/useToast.jsx
 import { useContext, useCallback } from 'react';
 import { ToastContext, DEFAULT_DURATION } from '../context/toastContext';
+import logger from '../services/logger';
 
 export const ToastType = {
     SUCCESS: 'success',
@@ -20,6 +21,7 @@ export const useToast = () => {
     const context = useContext(ToastContext);
 
     if (!context) {
+        logger.error('useToast.jsx', 'useToast', 'Hook utilisé en dehors du ToastProvider');
         throw new Error('useToast must be used within a ToastProvider');
     }
 
@@ -27,6 +29,7 @@ export const useToast = () => {
 
     // Fonction utilitaire pour traiter différents formats d'arguments
     const normalizeArguments = (titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.debug('useToast.jsx', 'normalizeArguments', 'Normalisation des arguments', { titleOrConfig, descriptionOrOptions, maybeOptions });
         // Si le premier argument est un objet avec une propriété title ou message
         if (typeof titleOrConfig === 'object' && titleOrConfig !== null && (titleOrConfig.title || titleOrConfig.message)) {
             return titleOrConfig;
@@ -50,6 +53,7 @@ export const useToast = () => {
 
     // Méthodes d'aide pour chaque type de toast avec support des deux formats
     const success = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'success', 'Création toast success', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -58,6 +62,7 @@ export const useToast = () => {
     }, [addToast]);
 
     const error = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'error', 'Création toast error', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -66,6 +71,7 @@ export const useToast = () => {
     }, [addToast]);
 
     const warning = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'warning', 'Création toast warning', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -74,6 +80,7 @@ export const useToast = () => {
     }, [addToast]);
 
     const info = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'info', 'Création toast info', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -82,6 +89,7 @@ export const useToast = () => {
     }, [addToast]);
 
     const refresh = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'refresh', 'Création toast refresh', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -91,6 +99,7 @@ export const useToast = () => {
 
     // Méthode utilitaire pour créer un toast avec une action - mise à jour pour le nouveau format
     const withAction = useCallback((titleOrConfig, actionTextOrDescription, onActionOrActionText, optionsOrOnAction = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'withAction', 'Création toast avec action', { titleOrConfig, actionTextOrDescription, optionsOrOnAction });
         // Si premier argument est un objet de configuration complète
         if (typeof titleOrConfig === 'object' && titleOrConfig !== null && (titleOrConfig.title || titleOrConfig.message)) {
             const { action, ...restConfig } = titleOrConfig;
@@ -129,6 +138,7 @@ export const useToast = () => {
 
     // Toast qui reste jusqu'à ce qu'on clique dessus
     const persistent = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'persistent', 'Création toast persistent', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -138,6 +148,7 @@ export const useToast = () => {
 
     // Toast éphémère très court (comme un feedback rapide)
     const quick = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'quick', 'Création toast rapide', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -147,6 +158,7 @@ export const useToast = () => {
 
     // Toast longue durée (pour les messages importants)
     const long = useCallback((titleOrConfig, descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'long', 'Création toast long', { titleOrConfig, descriptionOrOptions, maybeOptions });
         const config = normalizeArguments(titleOrConfig, descriptionOrOptions, maybeOptions);
         return addToast({
             ...config,
@@ -156,6 +168,7 @@ export const useToast = () => {
 
     // Toast de chargement qui sera remplacé par un autre toast
     const loading = useCallback((titleOrConfig = "Chargement en cours...", descriptionOrOptions = {}, maybeOptions = {}) => {
+        logger.info('useToast.jsx', 'loading', 'Création toast loading', { titleOrConfig, descriptionOrOptions, maybeOptions });
         // Si le premier argument est une chaîne, on le traite comme un titre
         const config = typeof titleOrConfig === 'string'
             ? { title: titleOrConfig, ...(typeof descriptionOrOptions === 'string' ? { description: descriptionOrOptions, ...maybeOptions } : descriptionOrOptions) }

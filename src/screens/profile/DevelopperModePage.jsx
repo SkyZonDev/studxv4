@@ -6,9 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useToast } from '../../hooks/useToast';
 import * as FileSystem from 'expo-file-system';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import * as Clipboard from 'expo-clipboard';
+import Constants from 'expo-constants';
 import NetInfo from '@react-native-community/netinfo';
 import { useUser } from '../../context/userContext';
 
@@ -16,7 +16,7 @@ const DeveloperModePage = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const toast = useToast();
-    const { getUniqueID } = useUser();
+    const { getUniqueID, removeAllData } = useUser();
 
     // State variables
     const [showEnvironment, setShowEnvironment] = useState(false);
@@ -122,10 +122,20 @@ const DeveloperModePage = () => {
                     <Text style={styles.infoLabel}>App Version:</Text>
                     <Text style={styles.infoValue}>{Constants.expoConfig?.version || Constants.manifest.version || '1.0.0'}</Text>
                 </View>
-                <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+                <TouchableOpacity
+                    style={[styles.infoRow, { borderBottomWidth: 0 }]}
+                    onLongPress={async () => {
+                        try {
+                            await Clipboard.setStringAsync(uniqueID);
+                            toast.info('Unique ID copié');
+                        } catch (error) {
+                            toast.error('Erreur lors de la copie');
+                        }
+                    }}
+                >
                     <Text style={styles.infoLabel}>Unique ID:</Text>
                     <Text style={styles.infoValue}>{uniqueID}</Text>
-                </View>
+                </TouchableOpacity>
             </View>
         );
     };
@@ -237,72 +247,7 @@ const DeveloperModePage = () => {
     };
 
     const clearAppData = async () => {
-        try {
-            // Afficher un toast de chargement
-            const { success, error } = toast.loading('Suppression des données en cours...');
-
-            // 1. Effacer AsyncStorage
-            await AsyncStorage.clear();
-
-            // 2. Nettoyer les fichiers avec gestion d'erreurs
-            try {
-                const cacheDirectory = FileSystem.cacheDirectory;
-                const documentsDirectory = FileSystem.documentDirectory;
-
-                // Nettoyer les fichiers du cache un par un
-                if (cacheDirectory) {
-                    const cacheFiles = await FileSystem.readDirectoryAsync(cacheDirectory);
-                    await Promise.all(
-                        cacheFiles.map(async (file) => {
-                            try {
-                                await FileSystem.deleteAsync(`${cacheDirectory}${file}`, { idempotent: true });
-                            } catch (e) {
-                                console.log(`Impossible de supprimer le fichier cache: ${file}`);
-                            }
-                        })
-                    );
-                }
-
-                // Nettoyer les fichiers documents
-                if (documentsDirectory) {
-                    const docFiles = await FileSystem.readDirectoryAsync(documentsDirectory);
-                    await Promise.all(
-                        docFiles.map(async (file) => {
-                            try {
-                                await FileSystem.deleteAsync(`${documentsDirectory}${file}`, { idempotent: true });
-                            } catch (e) {
-                                console.log(`Impossible de supprimer le fichier document: ${file}`);
-                            }
-                        })
-                    );
-                }
-            } catch (e) {
-                console.warn('Erreur pendant le nettoyage des fichiers:', e);
-            }
-
-            // 3. Réinitialiser les états de l'application
-            setApiEndpoint('https://studx.ddns.net/api/v1');
-            setShowEnvironment(false);
-            setExpandedSection(null);
-
-            // 4. Afficher un message de succès
-            success('Données effacées', 'Les données ont été supprimées');
-
-            // 5. Demander un redémarrage manuel
-            setTimeout(() => {
-                toast.info('Veuillez redémarrer l\'application pour appliquer les changements', {
-                    duration: 3000,
-                    position: toast.positions.TOP
-                });
-            }, 1000);
-
-        } catch (error) {
-            console.error('Erreur lors de la suppression des données:', error);
-            toast.error('Erreur partielle lors de la suppression', {
-                duration: 2500,
-                position: toast.positions.TOP
-            });
-        }
+        await removeAllData(true, setApiEndpoint, setShowEnvironment, setExpandedSection);
     };
 
     return (
@@ -561,7 +506,7 @@ const DeveloperModePage = () => {
                     </LinearGradient>
                 </TouchableOpacity>
 
-                <View style={{ height: 40 }} />
+                <View style={{ height: 80 }} />
             </ScrollView>
         </SafeAreaView>
     );

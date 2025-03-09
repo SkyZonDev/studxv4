@@ -5,7 +5,8 @@ import { Alert } from 'react-native';
 import { format, parseISO, startOfWeek, endOfWeek, addDays, isSameDay, isBefore, isAfter } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useUser } from '../hooks/useUser';
-import { ToastType, useToast } from '../hooks/useToast';
+import { useToast } from '../hooks/useToast';
+import logger from '../services/logger';
 
 // Clés de stockage
 const STORAGE_KEY = 'calendar_data';
@@ -58,14 +59,17 @@ export const CalendarProvider = ({ children }) => {
 
     // Récupérer l'URL de l'API du calendrier depuis SecureStore
     const getCalendarApiUrl = async () => {
+        logger.debug('calendarContext', 'getCalendarApiUrl', 'Récupération de l\'URL du calendrier');
         try {
             // Vérifier d'abord si l'URL est déjà stockée dans SecureStore
             const storedUrl = await SecureStore.getItemAsync(CALENDAR_URL_KEY);
 
             if (storedUrl) {
+                logger.info('calendarContext', 'getCalendarApiUrl', 'URL trouvée dans SecureStore', { url: storedUrl });
                 setCalendarApiUrl(storedUrl);
                 return storedUrl;
             } else if (isAuthenticated) {
+                logger.debug('calendarContext', 'getCalendarApiUrl', 'Récupération de l\'URL via API');
                 // Si l'URL n'est pas stockée, la récupérer via l'API
                 const { success, data, error } = await getCalendarKey();
 
@@ -86,8 +90,10 @@ export const CalendarProvider = ({ children }) => {
                     // Stocker l'URL dans SecureStore pour les prochaines utilisations
                     await SecureStore.setItemAsync(CALENDAR_URL_KEY, newUrl);
                     setCalendarApiUrl(newUrl);
+                    logger.info('calendarContext', 'getCalendarApiUrl', 'Nouvelle URL récupérée et stockée', { url: newUrl });
                     return newUrl;
                 } else {
+                    logger.error('calendarContext', 'getCalendarApiUrl', 'Erreur lors de la récupération de l\'URL', error);
                     return toast.error({
                         title: error.title,
                         description: error.detail
@@ -95,9 +101,11 @@ export const CalendarProvider = ({ children }) => {
                 }
             } else {
                 // L'utilisateur n'est pas authentifié
+                logger.warn('calendarContext', 'getCalendarApiUrl', 'Utilisateur non authentifié');
                 return null;
             }
         } catch (err) {
+            logger.error('calendarContext', 'getCalendarApiUrl', 'Erreur', err);
             toast.error('Une erreur est survenue', 'Impossible de récupérer l\'url du calendrier');
             return null;
         }
@@ -105,7 +113,10 @@ export const CalendarProvider = ({ children }) => {
 
     // Récupérer les données du calendrier depuis l'API
     const fetchCalendarData = async (checkForChanges = true) => {
+        logger.debug('calendarContext', 'fetchCalendarData', 'Début de la récupération des données', { checkForChanges });
+
         if (!isAuthenticated) {
+            logger.warn('calendarContext', 'fetchCalendarData', 'Tentative d\'accès sans authentification');
             setError('Vous devez être connecté pour accéder à votre emploi du temps');
             setIsLoading(false);
             return;
@@ -122,8 +133,10 @@ export const CalendarProvider = ({ children }) => {
                 throw new Error('URL du calendrier non disponible');
             }
 
+            logger.info('calendarContext', 'fetchCalendarData', 'Requête API calendrier', { apiUrl });
             const { success, data, error } = await getCalendar(apiUrl);
             if (!success) {
+                logger.error('calendarContext', 'fetchCalendarData', 'Échec de la requête API', error);
                 return toast.error({
                     title: error.title,
                     description: error.detail
@@ -136,6 +149,7 @@ export const CalendarProvider = ({ children }) => {
                 if (storedEvents) {
                     const changes = detectChanges(storedEvents, data.events);
                     if (changes.length > 0) {
+                        logger.info('calendarContext', 'fetchCalendarData', 'Changements détectés', { changesCount: changes.length });
                         setHasChanges(true);
                         notifyChanges(changes);
                     }
@@ -153,9 +167,15 @@ export const CalendarProvider = ({ children }) => {
             await AsyncStorage.setItem(LAST_UPDATED_KEY, now);
             setLastUpdated(now);
 
+            logger.info('calendarContext', 'fetchCalendarData', 'Données mises à jour avec succès', {
+                eventsCount: data.events.length,
+                lastUpdated: now
+            });
+
             return data.events;
         } catch (err) {
             // setError(err.message);
+            logger.error('calendarContext', 'fetchCalendarData', 'Erreur lors de la récupération', err);
             console.error('Erreur:', err);
             toast.error('Une erreur est survenue', 'Impossible de récupérer les infos du calendrier');
         } finally {
@@ -188,6 +208,11 @@ export const CalendarProvider = ({ children }) => {
 
     // Détecter les changements entre les anciennes et nouvelles données
     const detectChanges = (oldEvents, newEvents) => {
+        logger.debug('calendarContext', 'detectChanges', 'Début de la détection des changements', {
+            oldEventsCount: oldEvents.length,
+            newEventsCount: newEvents.length
+        });
+
         const changes = [];
 
         // Vérifier les suppressions
@@ -229,11 +254,18 @@ export const CalendarProvider = ({ children }) => {
             }
         });
 
+        logger.info('calendarContext', 'detectChanges', 'Changements détectés', {
+            changesCount: changes.length,
+            changes: changes.map(c => ({ type: c.type, eventId: c.event?.id }))
+        });
+
         return changes;
     };
 
     // Notifier les changements
     const notifyChanges = (changes) => {
+        logger.debug('calendarContext', 'notifyChanges', 'Notification des changements', { changesCount: changes.length });
+
         if (changes.length > 0) {
             toast.info("Changements dans votre emploi du temps", {
                 duration: 3000,
@@ -432,10 +464,13 @@ export const CalendarProvider = ({ children }) => {
 
     // Effacer l'URL du calendrier stockée (utile lors de la déconnexion)
     const clearCalendarUrl = async () => {
+        logger.debug('calendarContext', 'clearCalendarUrl', 'Suppression de l\'URL du calendrier');
         try {
             await SecureStore.deleteItemAsync(CALENDAR_URL_KEY);
             setCalendarApiUrl(null);
+            logger.info('calendarContext', 'clearCalendarUrl', 'URL du calendrier supprimée avec succès');
         } catch (err) {
+            logger.error('calendarContext', 'clearCalendarUrl', 'Erreur lors de la suppression', err);
             console.error('Erreur lors de la suppression de l\'URL du calendrier:', err);
         }
     };

@@ -27,7 +27,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 
 // Import sub screen
 import HelpScreen from '../screens/profile/help';
-import SecurityScreen from '../screens/profile/security';
 import SupportScreen from '../screens/profile/support';
 import PrivacyScreen from '../screens/profile/privacy';
 import LogsViewerPage from '../screens/profile/logs';
@@ -44,7 +43,7 @@ const DevModeNavigator = () => {
     const { colors } = useTheme();
 
     return (
-        <ProfileStack.Navigator
+        <DevModeStack.Navigator
             screenOptions={{
                 headerStyle: {
                     backgroundColor: colors.background,
@@ -60,7 +59,7 @@ const DevModeNavigator = () => {
                 animation: 'slide_from_right',
             }}
         >
-            <ProfileStack.Screen
+            <DevModeStack.Screen
                 name="DevModeMain"
                 component={DeveloperModePage}
                 options={{
@@ -68,7 +67,7 @@ const DevModeNavigator = () => {
                     title: 'DevModeMain'
                 }}
             />
-            <ProfileStack.Screen
+            <DevModeStack.Screen
                 name="Logs"
                 component={LogsViewerPage}
                 options={{
@@ -76,7 +75,7 @@ const DevModeNavigator = () => {
                     title: 'Logs'
                 }}
             />
-        </ProfileStack.Navigator>
+        </DevModeStack.Navigator>
     );
 }
 
@@ -114,14 +113,6 @@ const ProfileNavigator = () => {
                 options={{
                     headerShown: false,
                     title: 'Confidentialité'
-                }}
-            />
-            <ProfileStack.Screen
-                name="Security"
-                component={SecurityScreen}
-                options={{
-                    headerShown: false,
-                    title: 'Sécurité'
                 }}
             />
             <ProfileStack.Screen
@@ -235,6 +226,7 @@ const AuthStack = () => {
             }}
         >
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Logs" component={LogsViewerPage} />
         </Stack.Navigator>
     );
 };

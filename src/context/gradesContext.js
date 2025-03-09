@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../hooks/useToast';
+import logger from '../services/logger';
 
 // Storage keys
 const GRADES_STORAGE_KEY = 'grades_data';
@@ -30,6 +31,7 @@ export const GradeProvider = ({ children }) => {
 
     // Format the raw grade data for the app (matches GradesScreen expectations)
     const formatGradesForApp = (rawData) => {
+        logger.debug('gradesContext.js', 'formatGradesForApp', 'Début du formatage des notes', { dataLength: rawData?.length });
         if (!rawData || !rawData.length) return [];
 
         return rawData.map((item, index) => {
@@ -54,10 +56,15 @@ export const GradeProvider = ({ children }) => {
                 subject: courseName
             };
         });
+        logger.debug('gradesContext.js', 'formatGradesForApp', 'Formatage terminé', { formattedLength: rawData.length });
     };
 
     // Detect changes in grades to notify the user
     const detectGradeChanges = (oldGrades, newGrades) => {
+        logger.debug('gradesContext.js', 'detectGradeChanges', 'Vérification des changements de notes', {
+            oldGradesCount: oldGrades?.length,
+            newGradesCount: newGrades?.length
+        });
         if (!oldGrades || !newGrades) return [];
 
         const changes = [];
@@ -90,12 +97,18 @@ export const GradeProvider = ({ children }) => {
             }
         });
 
+        if (changes.length > 0) {
+            logger.info('gradesContext.js', 'detectGradeChanges', 'Nouvelles notes détectées', { changesCount: changes.length });
+        }
         return changes;
     };
 
     // Fetch grades from API
     const fetchGradesData = async (checkForChanges = true) => {
+        logger.info('gradesContext.js', 'fetchGradesData', 'Début de la récupération des notes', { checkForChanges });
+
         if (!isAuthenticated) {
+            logger.warn('gradesContext.js', 'fetchGradesData', 'Tentative d\'accès sans authentification');
             setError('Vous devez être connecté pour accéder à vos notes');
             setIsLoading(false);
             return;
@@ -108,6 +121,7 @@ export const GradeProvider = ({ children }) => {
             const { success, data, error } = await getGrades();
 
             if (!success) {
+                logger.error('gradesContext.js', 'fetchGradesData', 'Échec de récupération des notes', { error });
                 setError(error?.detail || 'Erreur lors du chargement des notes');
                 toast.error({
                     title: error?.title || 'Erreur',
@@ -118,16 +132,19 @@ export const GradeProvider = ({ children }) => {
 
             // Si nous n'avons pas de données ou si les notes sont vides
             if (!data || data.length === 0) {
+                logger.info('gradesContext.js', 'fetchGradesData', 'Aucune note disponible');
                 // Utiliser les données de démonstration (comme dans GradesScreen)
                 // const demoData = getDemoGradesData();
                 processGradesData([], false);
                 return [];
             }
 
+            logger.info('gradesContext.js', 'fetchGradesData', 'Notes récupérées avec succès', { count: data.length });
             // Process the real data
             processGradesData(data, checkForChanges);
             return data;
         } catch (err) {
+            logger.error('gradesContext.js', 'fetchGradesData', 'Erreur inattendue', { error: err.message });
             console.error('Erreur:', err);
             setError(err.message || 'Erreur lors du chargement des notes');
             toast.error({
@@ -149,6 +166,11 @@ export const GradeProvider = ({ children }) => {
 
     // Process grades data (common logic for real and demo data)
     const processGradesData = async (gradesData, checkForChanges) => {
+        logger.debug('gradesContext.js', 'processGradesData', 'Début du traitement des notes', {
+            dataLength: gradesData.length,
+            checkForChanges
+        });
+
         // Check for changes if requested
         if (checkForChanges) {
             const storedGrades = await getStoredGrades();
@@ -162,6 +184,7 @@ export const GradeProvider = ({ children }) => {
                         title: 'Nouvelles notes disponibles',
                         description: `${changes.length} nouvelle(s) note(s) ajoutée(s)`
                     });
+                    logger.info('gradesContext.js', 'processGradesData', 'Nouvelles notes détectées', { changesCount: changes.length });
                 }
             }
         }
@@ -182,6 +205,7 @@ export const GradeProvider = ({ children }) => {
         const now = new Date().toISOString();
         await AsyncStorage.setItem(LAST_UPDATED_GRADES_KEY, now);
         setLastUpdated(now);
+        logger.debug('gradesContext.js', 'processGradesData', 'Traitement des notes terminé');
     };
 
     // Get demo data when API is not available (matches GradesScreen sample data)
@@ -267,6 +291,7 @@ export const GradeProvider = ({ children }) => {
 
     // Get average grade for a specific subject or overall
     const calculateAverageGrade = (subject = null, semester = null) => {
+        logger.debug('gradesContext.js', 'calculateAverageGrade', 'Calcul de la moyenne', { subject, semester });
         let filteredGrades = [...formattedGrades];
 
         // Filter by semester if provided
@@ -380,6 +405,7 @@ export const GradeProvider = ({ children }) => {
 
     // Refresh grades data (force update)
     const refreshGrades = async () => {
+        logger.info('gradesContext.js', 'refreshGrades', 'Rafraîchissement des notes');
         return await fetchGradesData(true);
     };
 
@@ -399,8 +425,10 @@ export const GradeProvider = ({ children }) => {
 
     // Initialize grades data on startup and when authentication changes
     useEffect(() => {
+        logger.info('gradesContext.js', 'useEffect', 'Initialisation des notes');
         const initGradesData = async () => {
             if (!isAuthenticated) {
+                logger.warn('gradesContext.js', 'useEffect', 'Tentative d\'initialisation sans authentification');
                 setIsLoading(false);
                 return;
             }
@@ -429,7 +457,9 @@ export const GradeProvider = ({ children }) => {
 
                 // Then fetch fresh data from API
                 fetchGradesData();
+                logger.info('gradesContext.js', 'useEffect', 'Initialisation terminée');
             } catch (err) {
+                logger.error('gradesContext.js', 'useEffect', 'Erreur lors de l\'initialisation', { error: err.message });
                 console.error('Erreur d\'initialisation:', err);
                 setError('Erreur lors du chargement des données de notes');
                 setIsLoading(false);

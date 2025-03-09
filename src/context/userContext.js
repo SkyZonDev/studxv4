@@ -3,6 +3,7 @@ import logger from '../services/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as FileSystem from 'expo-file-system';
 import UserService from '../services/userService';
 import { useToast } from '../hooks/useToast';
 import ApiClient from '../services/apiClient';
@@ -12,7 +13,7 @@ import Constants from 'expo-constants';
 const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
 
 // Clés pour le stockage sécurisé des données dans SecureStore
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
     ID: 'unique_id',
     USERNAME: 'auth_username',
     PASSWORD: 'auth_password',
@@ -46,6 +47,7 @@ export const UserProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [needsPasswordOnly, setNeedsPasswordOnly] = useState(false);
+    const [needReload, setNeedReload] = useState(false);
     const [credentials, setCredientials] = useState({
         username: "",
         password: ""
@@ -67,7 +69,7 @@ export const UserProvider = ({ children }) => {
             if (Object.keys(data).length) {
                 try {
                     await SecureStore.setItemAsync(STORAGE_KEYS.ID, data.id);
-                    logger.info('Identifiant unique généré');
+                    logger.info('UserContext.jsx', 'generateUniqueID', 'Identifiant unique généré');
                     return toast.success(
                         'Identifiant unique générer',
                         'Cet ID permettra de facilité l\'aide pour la détection des problèmes'
@@ -96,7 +98,7 @@ export const UserProvider = ({ children }) => {
     const getUniqueID = async () => {
         try {
             const storedID = await SecureStore.getItemAsync(STORAGE_KEYS.ID);
-            return storedID;
+            return storedID ? storedID : 'ID non initialisé';
         } catch (error) {
             logger.error('Impossible de récupérer l\'ID unique', error)
             toast.error('Une erreur est survenue', 'Impossible de récupérer l\'unique ID');
@@ -164,8 +166,8 @@ export const UserProvider = ({ children }) => {
                 }
             }
         } catch (err) {
+            logger.error('UserContext.jsx', 'loadStoredUserData', 'Erreur lors du chargement des données', err);
             console.error('Erreur lors du chargement des données:', err);
-            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -176,14 +178,23 @@ export const UserProvider = ({ children }) => {
      */
     const authenticateWithBiometrics = async () => {
         try {
+            logger.debug('userContext.js', 'authenticateWithBiometrics', 'Tentative d\'authentification biométrique');
+
+            if (needReload) {
+                logger.info('userContext.js', 'authenticateWithBiometrics', 'Redémarrage requis, authentification impossible');
+                return toast.info('Redémarrage demandé', 'Veuillez fermer et redémarrer l\'application');
+            }
+
             const result = await LocalAuthentication.authenticateAsync({
                 promptMessage: 'Authentifiez-vous pour accéder à votre compte',
                 cancelLabel: 'Annuler',
-                disableDeviceFallback: false,
+                disableDeviceFallback: true,
             });
 
+            logger.info('userContext.js', 'authenticateWithBiometrics', 'Résultat de l\'authentification biométrique', { success: result.success });
             return { success: result.success };
         } catch (err) {
+            logger.error('userContext.js', 'authenticateWithBiometrics', 'Erreur d\'authentification biométrique', err);
             console.error('Erreur d\'authentification biométrique:', err);
             return { success: false, error: err.message };
         }
@@ -194,11 +205,19 @@ export const UserProvider = ({ children }) => {
      */
     const loginWithStoredCredentials = async (username, password) => {
         try {
-            setError(null);
+            logger.debug('userContext.js', 'loginWithStoredCredentials', 'Tentative de connexion avec identifiants stockés', { username });
+
+            if (needReload) {
+                logger.info('userContext.js', 'loginWithStoredCredentials', 'Redémarrage requis, connexion impossible');
+                return toast.info('Redémarrage demandé', 'Veuillez fermer et redémarrer l\'application');
+            }
+
             const apiResponse = await userService.login(username, password);
             const result = ApiClient.handleApiResponse(apiResponse);
 
             if (result.success) {
+                logger.info('userContext.js', 'loginWithStoredCredentials', 'Connexion réussie avec identifiants stockés', { username });
+
                 setUserData(result.data.userData);
                 setUserCookies(result.data.cookies);
                 setUserRoutes(result.data.routes);
@@ -210,12 +229,18 @@ export const UserProvider = ({ children }) => {
                     position: toast.positions.TOP
                 });
             } else {
+                logger.warn('userContext.js', 'loginWithStoredCredentials', 'Échec de connexion avec identifiants stockés', {
+                    title: result.title,
+                    detail: result.detail
+                });
+
                 toast.error({
                     title: result.title,
                     description: result.detail
                 });
             }
         } catch (err) {
+            logger.error('userContext.js', 'loginWithStoredCredentials', 'Erreur critique de connexion', err);
             console.error('Erreur de connexion avec identifiants stockés', err);
             toast.error({
                 title: 'Erreur de connexion avec identifiants stockés',
@@ -233,6 +258,13 @@ export const UserProvider = ({ children }) => {
      */
     const login = async (username, password, rememberMe = false, profileId = "") => {
         try {
+            logger.debug('userContext.js', 'login', 'Tentative de connexion', { username, rememberMe, hasProfileId: !!profileId });
+
+            if (needReload) {
+                logger.info('userContext.js', 'login', 'Redémarrage requis, connexion impossible');
+                return toast.info('Redémarrage demandé', 'Veuillez fermer et redémarrer l\'application');
+            }
+
             setLoading(true);
 
             // Appel au service d'authentification
@@ -240,6 +272,8 @@ export const UserProvider = ({ children }) => {
             const result = ApiClient.handleApiResponse(apiResponse);
 
             if (result.success) {
+                logger.info('userContext.js', 'login', 'Connexion réussie', { username, rememberMe });
+
                 setUserData(result.data.userData);
                 setUserRoutes(result.data.routes);
                 setUserCookies(result.data.cookies);
@@ -252,32 +286,33 @@ export const UserProvider = ({ children }) => {
 
                 // Si "Se souvenir de moi" est coché, stocker les identifiants
                 if (rememberMe) {
+                    logger.debug('userContext.js', 'login', 'Sauvegarde des identifiants', { username });
                     await SecureStore.setItemAsync(STORAGE_KEYS.USERNAME, username);
                     await SecureStore.setItemAsync(STORAGE_KEYS.PASSWORD, password);
                     await SecureStore.setItemAsync(STORAGE_KEYS.REMEMBER_ME, 'true');
                 }
 
-                logger.info('Utilisateur connecté avec succès');
+                logger.info('UserContext.jsx', 'login', 'Utilisateur connecté avec succès');
                 toast.success({
                     title: result.title,
                     duration: 3000,
                     position: toast.positions.TOP
                 });
             } else {
-                logger.warn('Erreur lors de la connexion', {
+                logger.warn('userContext.js', 'login', 'Échec de connexion', {
                     title: result.title,
-                    description: result.detail
-                })
+                    detail: result.detail
+                });
                 toast.warning(result.title, result.detail);
             }
         } catch (err) {
+            logger.error('userContext.js', 'login', 'Erreur critique de connexion', err);
             console.error('Erreur de connexion:', err);
             toast.error({
                 title: "Une erreur est survenue lors de la connexion",
                 duration: 3000,
                 position: toast.positions.TOP
             });
-            setError(err.message);
             return { success: false, error: err.message };
         } finally {
             setLoading(false);
@@ -290,19 +325,21 @@ export const UserProvider = ({ children }) => {
      */
     const loginWithPasswordOnly = async (password) => {
         try {
-            setError(null);
+            logger.debug('userContext.js', 'loginWithPasswordOnly', 'Tentative de connexion avec mot de passe uniquement');
             setLoading(true);
 
             if (!storedUsername) {
+                logger.warn('userContext.js', 'loginWithPasswordOnly', 'Tentative de connexion sans nom d\'utilisateur stocké');
                 return toast.error({
                     title: 'Nom d\'utilisateur non trouvé.',
                     description: 'Veuillez vous connecter avec vos identifiants complets.'
                 });
             }
 
-            // Connexion avec le nom d'utilisateur stocké et le mot de passe fourni
+            logger.info('userContext.js', 'loginWithPasswordOnly', 'Connexion avec utilisateur stocké', { username: storedUsername });
             await login(storedUsername, password, true);
         } catch (err) {
+            logger.error('userContext.js', 'loginWithPasswordOnly', 'Erreur lors de la connexion avec mot de passe uniquement', err);
             console.error('Erreur de connexion avec mot de passe:', err);
             toast.error({
                 title: 'Erreur de connexion avec mot de passe',
@@ -374,7 +411,7 @@ export const UserProvider = ({ children }) => {
      * @description Déconnexion de l'utilisateur
      * Supprime toutes les données stockées dans SecureStore
      */
-    const logout = async () => {
+    const logout = async (notif) => {
         try {
             setLoading(true);
 
@@ -395,11 +432,13 @@ export const UserProvider = ({ children }) => {
             await AsyncStorage.removeItem(STORAGE_KEYS.ABSENCES_KEY);
             await AsyncStorage.removeItem(STORAGE_KEYS.GRADES_KEY);
 
+            if (notif) return;
+
             toast.success({
                 title: 'Déconnexion Réussi',
                 duration: 3000,
                 position: toast.positions.TOP
-            })
+            });
         } catch (err) {
             console.error('Erreur de déconnexion:', err);
             toast.error({
@@ -643,6 +682,83 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const removeAllData = async (devMode = false, setApiEndpoint, setShowEnvironment, setExpandedSection) => {
+        // Afficher un toast de chargement
+        const { success, error } = toast.loading('Suppression des données en cours...');
+        try {
+
+            // 1. Effacer AsyncStorage
+            await AsyncStorage.clear();
+            await SecureStore.deleteItemAsync(STORAGE_KEYS.ID);
+
+            // 2. Nettoyer les fichiers avec gestion d'erreurs
+            try {
+                const cacheDirectory = FileSystem.cacheDirectory;
+                const documentsDirectory = FileSystem.documentDirectory;
+
+                // Nettoyer les fichiers du cache un par un
+                if (cacheDirectory) {
+                    const cacheFiles = await FileSystem.readDirectoryAsync(cacheDirectory);
+                    await Promise.all(
+                        cacheFiles.map(async (file) => {
+                            try {
+                                await FileSystem.deleteAsync(`${cacheDirectory}${file}`, { idempotent: true });
+                            } catch (e) {
+                                console.log(`Impossible de supprimer le fichier cache: ${file}`);
+                            }
+                        })
+                    );
+                }
+
+                // Nettoyer les fichiers documents
+                if (documentsDirectory) {
+                    const docFiles = await FileSystem.readDirectoryAsync(documentsDirectory);
+                    await Promise.all(
+                        docFiles.map(async (file) => {
+                            try {
+                                await FileSystem.deleteAsync(`${documentsDirectory}${file}`, { idempotent: true });
+                            } catch (e) {
+                                console.log(`Impossible de supprimer le fichier document: ${file}`);
+                            }
+                        })
+                    );
+                }
+            } catch (e) {
+                error('Une erreur est survenue', 'Erreur pendant le nettoyage des fichiers')
+                console.warn('Erreur pendant le nettoyage des fichiers:', e);
+            }
+
+            if (devMode) {
+                // 3. Réinitialiser les états de l'application
+                setApiEndpoint('https://studx.ddns.net/api/v1');
+                setShowEnvironment(false);
+                setExpandedSection(null);
+            }
+
+            // 4. Afficher un message de succès
+            success('Données effacées', 'Les données ont été supprimées');
+
+            // 5. Demander un redémarrage manuel
+            setTimeout(async () => {
+                setNeedReload(true);
+                await logout();
+                toast.info('Redémarrage demandé', 'Veuillez redémarrer l\'application pour appliquer les changements', {
+                    duration: 3000,
+                    position: toast.positions.TOP
+                });
+            }, 1000);
+
+            return true
+        } catch (error) {
+            console.error('Erreur lors de la suppression des données:', error);
+            toast.error('Erreur partielle lors de la suppression', {
+                duration: 2500,
+                position: toast.positions.TOP
+            });
+            return false;
+        }
+    };
+
     // Valeurs exposées par le contexte
     const contextValue = {
         // États
@@ -664,7 +780,9 @@ export const UserProvider = ({ children }) => {
         getAbsences,
         getGrades,
         getUpdate,
-        getUniqueID
+        getUniqueID,
+
+        removeAllData
     };
 
     return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;

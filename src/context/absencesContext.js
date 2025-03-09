@@ -7,6 +7,7 @@ import {
 import { fr } from 'date-fns/locale';
 import { useUser } from '../hooks/useUser';
 import { ToastType, useToast } from '../hooks/useToast';
+import logger from '../services/logger';
 
 // Clés de stockage
 const STORAGE_KEY = 'absences_data';
@@ -127,27 +128,42 @@ export const AbsencesProvider = ({ children }) => {
 
     // Fonction pour charger les absences depuis le stockage local
     const loadFromStorage = useCallback(async () => {
+        // Ajout d'une référence pour éviter les appels multiples
+        if (loadFromStorage.isLoading) {
+            return null;
+        }
+
+        loadFromStorage.isLoading = true;
+
         try {
             const storedData = await AsyncStorage.getItem(STORAGE_KEY);
             const lastUpdatedString = await AsyncStorage.getItem(LAST_UPDATED_KEY);
 
             if (storedData) {
                 const parsedData = JSON.parse(storedData);
-                setAbsences(parsedData);
+
+                // Ne mettre à jour l'état que si les données sont différentes
+                if (JSON.stringify(parsedData) !== JSON.stringify(absences)) {
+                    setAbsences(parsedData);
+                    logger.debug('absencesContext', 'loadFromStorage', `Mise à jour: ${parsedData.length} absences`);
+                }
 
                 if (lastUpdatedString) {
                     setLastUpdated(new Date(lastUpdatedString));
                 }
 
+                loadFromStorage.isLoading = false;
                 return parsedData;
             }
 
+            loadFromStorage.isLoading = false;
             return null;
         } catch (err) {
-            console.error('Erreur lors du chargement des absences depuis le stockage:', err);
+            logger.error('absencesContext', 'loadFromStorage', 'Erreur lors du chargement', { error: err.message });
+            loadFromStorage.isLoading = false;
             return null;
         }
-    }, []);
+    }, [absences]); // Ajout de absences dans les dépendances
 
     // Fonction pour sauvegarder les absences dans le stockage local
     const saveToStorage = useCallback(async (data) => {
@@ -174,16 +190,20 @@ export const AbsencesProvider = ({ children }) => {
     // Fonction pour charger les absences depuis l'API
     const fetchAbsences = useCallback(async (forceRefresh = false) => {
         if (!isAuthenticated) {
+            logger.warn('absencesContext', 'fetchAbsences', 'Non authentifié');
             setError('Utilisateur non authentifié');
             setIsLoading(false);
             return false;
         }
 
-        // Si on n'est pas en train de forcer un rafraîchissement, on vérifie le cache
+        // Ajouter une vérification pour éviter les appels inutiles
+        if (!forceRefresh && absences.length > 0 && isCacheValid()) {
+            return true;
+        }
+
         if (!forceRefresh) {
             const cachedData = await loadFromStorage();
             if (cachedData && isCacheValid()) {
-                setAbsences(cachedData);
                 applyFilters(cachedData, searchQuery, filterPeriod);
                 setIsLoading(false);
                 return true;
@@ -193,8 +213,9 @@ export const AbsencesProvider = ({ children }) => {
         try {
             setIsLoading(true);
             setError(null);
+            logger.debug('absencesContext', 'fetchAbsences', `Rafraîchissement${forceRefresh ? ' forcé' : ''}`);
 
-            const { success, data , error } = await getAbsences();
+            const { success, data, error } = await getAbsences();
 
             if (success) {
                 setAbsences(data);
@@ -204,23 +225,20 @@ export const AbsencesProvider = ({ children }) => {
                 setHasChanges(false);
                 return true;
             } else {
+                logger.error('absencesContext', 'fetchAbsences', 'Erreur API', { error });
                 toast.error(error.title || 'Absences erreur', 'Erreur lors du chargement des absences');
-                // Si on a des données en cache, on les utilise même si elles sont périmées
+
                 const cachedData = await loadFromStorage();
                 if (cachedData) {
+                    logger.info('absencesContext', 'fetchAbsences', 'Utilisation des données en cache après erreur');
                     setAbsences(cachedData);
                     applyFilters(cachedData, searchQuery, filterPeriod);
                 }
                 setIsLoading(false);
-
-                toast.error({
-                    title: error.title || 'Erreur lors du chargement des absences',
-                    description: error.detail
-                });
-
-                return [];
+                return false;
             }
         } catch (err) {
+            logger.error('absencesContext', 'fetchAbsences', 'Erreur non gérée', { error: err.message });
             // Si on a des données en cache, on les utilise même si elles sont périmées
             const cachedData = await loadFromStorage();
             if (cachedData) {
@@ -229,11 +247,11 @@ export const AbsencesProvider = ({ children }) => {
             }
             setIsLoading(false);
 
-            toast.error('Erreur lors de la récupération des absences', err.message );
+            toast.error('Erreur lors de la récupération des absences', err.message);
 
             return false;
         }
-    }, [isAuthenticated, getAbsences, loadFromStorage, saveToStorage, isCacheValid, searchQuery, filterPeriod]);
+    }, [isAuthenticated, absences, isCacheValid, getAbsences, loadFromStorage, saveToStorage, searchQuery, filterPeriod]);
 
     // Fonction pour rafraîchir les absences (pull-to-refresh)
     const refreshAbsences = useCallback(async () => {
@@ -270,6 +288,7 @@ export const AbsencesProvider = ({ children }) => {
     // Fonction pour appliquer les filtres (recherche et période)
     const applyFilters = useCallback((data, query, period) => {
         if (!data || data.length === 0) return;
+
         const filtered = data.filter(absence => {
             // Filtre de recherche
             const matchesSearch = !query ||
@@ -284,8 +303,13 @@ export const AbsencesProvider = ({ children }) => {
             return matchesSearch && matchesPeriod;
         });
 
+        // Ne logger que si le nombre d'absences filtrées a changé
+        if (filtered.length !== filteredAbsences.length) {
+            logger.debug('absencesContext', 'applyFilters', `Filtrage: ${filtered.length}/${data.length} absences`);
+        }
+
         setFilteredAbsences(filtered);
-    }, [isDateInPeriod]);
+    }, [isDateInPeriod, filteredAbsences.length]);
 
     // Appliquer les filtres lorsqu'ils changent
     useEffect(() => {
@@ -301,7 +325,13 @@ export const AbsencesProvider = ({ children }) => {
 
     // Fonction pour justifier une absence
     const submitJustification = useCallback(async (absenceId, justificationFile) => {
+        logger.debug('absencesContext', 'submitJustification', 'Début de la justification', {
+            absenceId,
+            fileName: justificationFile.name
+        });
+
         if (!isAuthenticated) {
+            logger.warn('absencesContext', 'submitJustification', 'Tentative de justification non authentifiée');
             toast.error('Requête invalide - Non authentifié');
             return false;
         }
@@ -312,6 +342,7 @@ export const AbsencesProvider = ({ children }) => {
             const response = await justifyAbsence(absenceId, justificationFile);
 
             if (response.success) {
+                logger.info('absencesContext', 'submitJustification', 'Justification réussie', { absenceId });
                 // Mettre à jour l'absence dans l'état local
                 const updatedAbsences = absences.map(absence => {
                     if (absence.id === absenceId) {
@@ -338,12 +369,20 @@ export const AbsencesProvider = ({ children }) => {
                 setIsLoading(false);
                 return true;
             } else {
+                logger.error('absencesContext', 'submitJustification', 'Échec de la justification', {
+                    absenceId,
+                    response
+                });
                 toast.error('Veuillez réessayer plus tard');
 
                 setIsLoading(false);
                 return false;
             }
         } catch (err) {
+            logger.error('absencesContext', 'submitJustification', 'Erreur lors de la justification', {
+                error: err.message,
+                absenceId
+            });
             console.error('Erreur lors de la justification de l\'absence:', err);
 
             toast.error(err.message || 'Veuillez réessayer plus tard'); // Erreur lors de l'envoi du message

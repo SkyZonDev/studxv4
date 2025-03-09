@@ -65,8 +65,8 @@ const SupportPage = () => {
         //     position: toast.positions.TOP
         // });
 
-        toast.success('Fonctionnalité en développement', {
-            duration: 3000,
+        toast.info('Acion impossible', 'Fonctionnalité en cours de développement', {
+            duration: 2500,
             position: toast.positions.TOP
         });
 

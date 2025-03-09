@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView, StatusBar, TextInput, Modal, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView, StatusBar, TextInput, Modal, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,17 +48,18 @@ const LogsViewerPage = () => {
 
                 lines.forEach(line => {
                     try {
-                        // Parse du format [timestamp][LEVEL] message | data
-                        const timestampMatch = line.match(/\[(.*?)\]/);
-                        const levelMatch = line.match(/\]\[(.*?)\]/);
+                        // Parse du format [timestamp][LEVEL][fichier:fonction] message | data
+                        const matches = line.match(/\[(.*?)\]\[(.*?)\]\[(.*?)\](.*)/);
 
-                        if (timestampMatch && levelMatch) {
-                            const timestamp = timestampMatch[1];
-                            const level = levelMatch[1];
-
-                            const messageStart = line.indexOf('] ', line.indexOf(']', line.indexOf(']') + 1)) + 2;
-                            let message = line.substring(messageStart);
+                        if (matches && matches.length >= 5) {
+                            const timestamp = matches[1];
+                            const level = matches[2];
+                            const context = matches[3]; // fichier:fonction
+                            let message = matches[4].trim();
                             let data = null;
+
+                            // Extraction du contexte (fichier:fonction)
+                            const [fileContext, functionContext] = context.split(':');
 
                             // Extraction des données si présentes
                             const dataSeparator = message.indexOf(' | ');
@@ -77,6 +78,8 @@ const LogsViewerPage = () => {
                                 id: `${timestamp}-${Math.random().toString(16).slice(2)}`,
                                 timestamp,
                                 level,
+                                fileContext,
+                                functionContext,
                                 message,
                                 data,
                                 rawLog: line,
@@ -228,8 +231,13 @@ const LogsViewerPage = () => {
             activeOpacity={0.7}
         >
             <View style={styles.logHeader}>
-                <View style={[styles.levelIndicator, { backgroundColor: logLevelColors[item.level] || '#999' }]}>
-                    <Text style={styles.levelText}>{item.level}</Text>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={[styles.levelIndicator, { backgroundColor: logLevelColors[item.level] || '#999' }]}>
+                        <Text style={styles.levelText}>{item.level}</Text>
+                    </View>
+                    <View style={[styles.levelIndicator, { backgroundColor:  '#999' }]}>
+                        <Text style={styles.levelText}>{item.fileContext}</Text>
+                    </View>
                 </View>
                 <Text style={styles.timestamp}>{formatDate(item.timestamp)}</Text>
             </View>
@@ -268,7 +276,7 @@ const LogsViewerPage = () => {
             animationType="slide"
             onRequestClose={() => setModalVisible(false)}
         >
-            <View style={styles.modalContainer}>
+            <Pressable style={styles.modalContainer} onPress={() => setModalVisible(false)}>
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Détails du log</Text>
@@ -279,8 +287,16 @@ const LogsViewerPage = () => {
 
                     {selectedLog && (
                         <View style={styles.logDetails}>
-                            <View style={[styles.detailLevelIndicator, { backgroundColor: logLevelColors[selectedLog.level] || '#999' }]}>
-                                <Text style={styles.detailLevelText}>{selectedLog.level}</Text>
+                            <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap', marginBottom: 15 }}>
+                                <View style={[styles.detailLevelIndicator, { backgroundColor: logLevelColors[selectedLog.level] || '#999' }]}>
+                                    <Text style={styles.detailLevelText}>{selectedLog.level}</Text>
+                                </View>
+                                <View style={[styles.detailLevelIndicator, { backgroundColor: '#D36E70' }]}>
+                                    <Text style={styles.detailLevelText}>{selectedLog.fileContext}</Text>
+                                </View>
+                                <View style={[styles.detailLevelIndicator, { backgroundColor: '#00BB2D' }]}>
+                                    <Text style={styles.detailLevelText}>{selectedLog.functionContext}()</Text>
+                                </View>
                             </View>
 
                             <View style={styles.detailItem}>
@@ -327,7 +343,7 @@ const LogsViewerPage = () => {
                         </View>
                     )}
                 </View>
-            </View>
+            </Pressable>
         </Modal>
     );
 
@@ -703,7 +719,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 5,
-        marginBottom: 15,
+        // marginBottom: 15,
     },
     detailLevelText: {
         color: '#FFFFFF',

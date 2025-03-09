@@ -15,7 +15,7 @@ import GradientIcon from '../components/gradientIcon';
 
 const ProfileScreen = () => {
     const navigation = useNavigation();
-    const { uniqueIdentifier, userData, logout } = useUser();
+    const { userData, logout } = useUser();
     const { preferences } = usePreferences();
     const toast = useToast();
     const { colors, darkMode, toggleTheme } = useTheme();
@@ -97,6 +97,13 @@ const ProfileScreen = () => {
         timerRef.current = setTimeout(() => {
             setCompteurClics(0);
         }, 3000);
+    };
+
+    const handleNotImplemented = () => {
+        toast.info('Accès impossible', 'Fonctionnalité en cours de développement', {
+            duration: 2500,
+            position: toast.positions.TOP
+        });
     };
 
     const styles = StyleSheet.create({
@@ -470,9 +477,8 @@ const ProfileScreen = () => {
                                 thumbColor={darkMode ? '#4A6FE1' : '#F5F5F5'}
                             />
                         )}
-                        {renderSettingItem('language', 'Langue', preferences.language, () => { })}
-                        {renderSettingItem('lock-closed', 'Confidentialité', '', () => goToSettingPage('Privacy'))}
-                        {renderSettingItem('shield-checkmark', 'Sécurité', '', () => goToSettingPage('Security'), true)}
+                        {renderSettingItem('language', 'Langue', preferences.language, handleNotImplemented)}
+                        {renderSettingItem('lock-closed', 'Confidentialité', '', () => goToSettingPage('Privacy'), true)}
                     </View>
                 </View>
 
@@ -480,7 +486,7 @@ const ProfileScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Support</Text>
                     <View style={styles.card}>
-                        {renderSettingItem('help-circle', 'Aide et assistance', '', () => goToSettingPage('Help'))}
+                        {/* {renderSettingItem('help-circle', 'Aide et assistance', '', () => goToSettingPage('Help'))} */}
                         {renderSettingItem('mail', 'Contacter le support', '', () => goToSettingPage('Support'), true)}
                     </View>
                 </View>
@@ -527,7 +533,7 @@ const ProfileScreen = () => {
 
                 {/* Logs */}
                 {devMode && (
-                    <View style={[styles.section, { flexDirection: "row", gap: 10 }]}>
+                    <View style={[styles.section, { flexDirection: "row", gap: 10, marginTop: 15 }]}>
                         <TouchableOpacity style={[styles.logButton, { flex: 1 }]} onPress={() => goToSettingPage('DevMode')}>
                             <Ionicons name="code" size={20} color="#4A6FE1" />
                             <Text style={styles.logText}>Mode développeur</Text>
@@ -551,7 +557,6 @@ const ProfileScreen = () => {
                 {/* Credits */}
                 <View style={styles.credits}>
                     <Text style={styles.creditsText}>StudX v{version}</Text>
-                    <Text>{uniqueIdentifier}</Text>
                     <Text style={styles.creditsSubtext}>Développé par Jean-Pierre DUPUIS</Text>
                     <Text style={styles.creditsSubtext}>© {new Date().getFullYear()} Tous droits réservés</Text>
                 </View>

@@ -12,7 +12,7 @@ const HelpPage = () => {
     const toast = useToast();
 
     const handleNotImplemented = () => {
-        toast.info('Fonctionnalité en cours de développement', {
+        toast.info('Accès impossible', 'Fonctionnalité en cours de développement', {
             duration: 2500,
             position: toast.positions.TOP
         });

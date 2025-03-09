@@ -5,24 +5,32 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useToast } from '../../hooks/useToast';
+import { useUser } from '../../context/userContext';
+import CustomAlert from '../../components/alert/CustomAlert';
 
 const PrivacyPage = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const toast = useToast();
+    const { removeAllData } = useUser();
 
     // États pour les options de confidentialité
     const [profileVisibility, setProfileVisibility] = useState(true);
     const [activityStatus, setActivityStatus] = useState(true);
     const [locationSharing, setLocationSharing] = useState(false);
     const [dataCollection, setDataCollection] = useState(true);
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false)
 
     const handleNotImplemented = () => {
-        toast.info('Fonctionnalité en cours de développement', {
+        toast.info('Accès impossible', 'Fonctionnalité en cours de développement', {
             duration: 2500,
             position: toast.positions.TOP
         });
     };
+
+    const handleDeleteAllData = async () => {
+        setShowDeleteAlert(true);
+    }
 
     const renderSettingItem = (icon, title, description, value, onPress, last = false, rightComponent = null) => (
         <TouchableOpacity
@@ -122,10 +130,10 @@ const PrivacyPage = () => {
                 </View> */}
 
                 {/* Data Privacy */}
-                {/* <View style={styles.section}>
+                <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Données</Text>
                     <View style={styles.card}>
-                        {renderSettingItem(
+                        {/* {renderSettingItem(
                             'analytics',
                             'Collecte de données',
                             'Autoriser la collecte de données pour améliorer l\'application',
@@ -145,17 +153,17 @@ const PrivacyPage = () => {
                             'Obtenir une copie de toutes vos données',
                             '',
                             handleNotImplemented
-                        )}
+                        )} */}
                         {renderSettingItem(
                             'trash',
                             'Supprimer mes données',
                             'Effacer définitivement toutes vos données',
                             '',
-                            handleNotImplemented,
+                            handleDeleteAllData,
                             true
                         )}
                     </View>
-                </View> */}
+                </View>
 
                 {/* Legal */}
                 <View style={styles.section}>
@@ -181,6 +189,28 @@ const PrivacyPage = () => {
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            <CustomAlert
+                visible={showDeleteAlert}
+                onClose={() => setShowDeleteAlert(false)}
+                type="warning"
+                title="Confirmer la suppression"
+                message="Êtes-vous sûr de vouloir supprimer toutes vos données ? Cette action vous déconnectera"
+                buttons={
+                    [
+                        { text: 'Annuler', style: 'cancel' },
+                        {
+                            text: 'Supprimer',
+                            style: 'confirm',
+                            onPress: async () => {
+                                await removeAllData();
+
+                            }
+                        }
+                    ]
+                }
+                dismissable
+            />
         </SafeAreaView>
     );
 };

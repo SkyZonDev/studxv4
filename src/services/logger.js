@@ -59,38 +59,46 @@ class LogService {
 
     /**
      * Ajoute un log de niveau DEBUG
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles (optionnel)
      */
-    debug(message, data = null) {
-        this._log(CONFIG.LOG_LEVELS.DEBUG, message, data);
+    debug(fileContext, functionContext, message, data = null) {
+        this._log(CONFIG.LOG_LEVELS.DEBUG, message, data, fileContext, functionContext);
     }
 
     /**
      * Ajoute un log de niveau INFO
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles (optionnel)
      */
-    info(message, data = null) {
-        this._log(CONFIG.LOG_LEVELS.INFO, message, data);
+    info(fileContext, functionContext, message, data = null) {
+        this._log(CONFIG.LOG_LEVELS.INFO, message, data, fileContext, functionContext);
     }
 
     /**
      * Ajoute un log de niveau WARN
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles (optionnel)
      */
-    warn(message, data = null) {
-        this._log(CONFIG.LOG_LEVELS.WARN, message, data);
+    warn(fileContext, functionContext, message, data = null) {
+        this._log(CONFIG.LOG_LEVELS.WARN, message, data, fileContext, functionContext);
     }
 
     /**
      * Ajoute un log de niveau ERROR
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles (optionnel)
      */
-    error(message, data = null) {
-        this._log(CONFIG.LOG_LEVELS.ERROR, message, data);
+    error(fileContext, functionContext, message, data = null) {
+        this._log(CONFIG.LOG_LEVELS.ERROR, message, data, fileContext, functionContext);
     }
 
     /**
@@ -98,19 +106,23 @@ class LogService {
      * @param {string} level Niveau de log
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @private
      */
-    _log(level, message, data) {
+    _log(level, message, data, fileContext = 'unknown', functionContext = 'unknown') {
         const timestamp = new Date().toISOString();
         const logEntry = {
             timestamp,
             level,
+            fileContext,
+            functionContext,
             message,
             data: data ? JSON.stringify(data) : null
         };
 
-        // Formatage du log
-        const logString = `[${timestamp}][${level}] ${message}${data ? ` | ${JSON.stringify(data)}` : ''}\n`;
+        // Formatage du log avec contexte
+        const logString = `[${timestamp}][${level}][${fileContext}:${functionContext}] ${message}${data ? ` | ${JSON.stringify(data)}` : ''}\n`;
 
         // Si le service n'est pas encore initialisé, on met en file d'attente
         if (!this.initialized) {
@@ -122,7 +134,7 @@ class LogService {
         this._writeLog(logString);
 
         // Log également dans la console pour le développement
-        this._consoleLog(level, message, data);
+        this._consoleLog(level, message, data, fileContext, functionContext);
     }
 
     /**
@@ -187,24 +199,27 @@ class LogService {
      * @param {string} level Niveau de log
      * @param {string} message Message à logger
      * @param {object} data Données additionnelles
+     * @param {string} fileContext Nom du fichier source
+     * @param {string} functionContext Nom de la fonction source
      * @private
      */
-    _consoleLog(level, message, data) {
+    _consoleLog(level, message, data, fileContext, functionContext) {
+        const contextMsg = `[${fileContext}:${functionContext}] ${message}`;
         switch (level) {
             case CONFIG.LOG_LEVELS.DEBUG:
-                console.debug(message, data || '');
+                console.debug(contextMsg, data || '');
                 break;
             case CONFIG.LOG_LEVELS.INFO:
-                console.info(message, data || '');
+                console.info(contextMsg, data || '');
                 break;
             case CONFIG.LOG_LEVELS.WARN:
-                console.warn(message, data || '');
+                console.warn(contextMsg, data || '');
                 break;
             case CONFIG.LOG_LEVELS.ERROR:
-                console.error(message, data || '');
+                console.error(contextMsg, data || '');
                 break;
             default:
-                console.log(message, data || '');
+                console.log(contextMsg, data || '');
         }
     }
 
