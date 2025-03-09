@@ -30,12 +30,55 @@ import HelpScreen from '../screens/profile/help';
 import SecurityScreen from '../screens/profile/security';
 import SupportScreen from '../screens/profile/support';
 import PrivacyScreen from '../screens/profile/privacy';
+import LogsViewerPage from '../screens/profile/logs';
+import DeveloperModePage from '../screens/profile/DevelopperModePage';
 
 
 // Create the navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
+const DevModeStack = createNativeStackNavigator();
+
+const DevModeNavigator = () => {
+    const { colors } = useTheme();
+
+    return (
+        <ProfileStack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.background,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border || 'rgba(0,0,0,0.1)',
+                },
+                headerTintColor: colors.text.primary,
+                headerTitleStyle: {
+                    fontWeight: '600',
+                },
+                animation: 'slide_from_right',
+            }}
+        >
+            <ProfileStack.Screen
+                name="DevModeMain"
+                component={DeveloperModePage}
+                options={{
+                    headerShown: false,
+                    title: 'DevModeMain'
+                }}
+            />
+            <ProfileStack.Screen
+                name="Logs"
+                component={LogsViewerPage}
+                options={{
+                    headerShown: false,
+                    title: 'Logs'
+                }}
+            />
+        </ProfileStack.Navigator>
+    );
+}
 
 const ProfileNavigator = () => {
     const { colors } = useTheme();
@@ -95,6 +138,14 @@ const ProfileNavigator = () => {
                 options={{
                     headerShown: false,
                     title: 'Aide'
+                }}
+            />
+            <ProfileStack.Screen
+                name="DevMode"
+                component={DevModeNavigator}
+                options={{
+                    headerShown: false,
+                    title: 'DevMode'
                 }}
             />
         </ProfileStack.Navigator>
