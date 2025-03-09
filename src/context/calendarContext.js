@@ -98,7 +98,7 @@ export const CalendarProvider = ({ children }) => {
                 return null;
             }
         } catch (err) {
-            toast.error(err.message);
+            toast.error('Une erreur est survenue', 'Impossible de récupérer l\'url du calendrier');
             return null;
         }
     };
@@ -157,7 +157,7 @@ export const CalendarProvider = ({ children }) => {
         } catch (err) {
             // setError(err.message);
             console.error('Erreur:', err);
-            toast.error(err.message);
+            toast.error('Une erreur est survenue', 'Impossible de récupérer les infos du calendrier');
         } finally {
             setIsLoading(false);
         }

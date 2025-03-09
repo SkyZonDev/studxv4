@@ -1,5 +1,6 @@
 import ApiClient from './apiClient';
 
+
 class UserService {
     constructor(baseUrl = 'https://studx.ddns.net/api/v1', options = {}) {
         this.apiClient = new ApiClient(baseUrl, options);
@@ -16,6 +17,7 @@ class UserService {
         }
         return cookieList.join('; ');
     }
+
     /**
      * Authentifie un utilisateur
      * @param {string} username - Nom d'utilisateur
@@ -101,6 +103,46 @@ class UserService {
                 Cookie: cookies
             }
         });
+    }
+
+    /**
+     * @description Récupère la dernière version disponible de l'application
+     */
+    getUpdate() {
+        return this.apiClient.get({
+            path: '/app/releases/latest'
+        })
+    }
+
+    /**
+     * @description Récupère son identifiant unique
+     */
+    getUniqueID() {
+        return this.apiClient.get({
+            path: '/auth/uniqueID'
+        });
+    }
+
+    isNewerVersion(version1, version2) {
+        // Fonction pour extraire les numéros de version
+        const extractNumbers = (version) => {
+            return version.split(' ')[0].split('.').map(Number);
+        };
+
+        const v1 = extractNumbers(version1);
+        const v2 = extractNumbers(version2);
+
+        // Comparer chaque partie de la version
+        for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
+            const num1 = v1[i] || 0;
+            const num2 = v2[i] || 0;
+
+            if (num2 > num1) return true;
+            if (num1 > num2) return false;
+        }
+
+        // Si toutes les parties sont égales, retourner false
+        return false;
     }
 }
 

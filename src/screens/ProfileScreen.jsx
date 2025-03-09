@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar, Switch, Linking } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar, Switch, Linking, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,13 +15,16 @@ import GradientIcon from '../components/gradientIcon';
 
 const ProfileScreen = () => {
     const navigation = useNavigation();
-    const { userData, logout } = useUser();
+    const { uniqueIdentifier, userData, logout } = useUser();
     const { preferences } = usePreferences();
     const toast = useToast();
     const { colors, darkMode, toggleTheme } = useTheme();
     const insets = useSafeAreaInsets();
-    const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
-    const buildId = Constants.expoConfig?.buildId || 'non disponible';
+    const version = Constants.expoConfig?.version || 'non disponible';
+
+    const [devMode, setDevMode] = useState(false);
+    const [compteurClics, setCompteurClics] = useState(0);
+    const timerRef = useRef(null);
 
     const handleLogout = async () => {
         try {
@@ -66,6 +69,34 @@ const ProfileScreen = () => {
 
     const openLink = (url) => {
         Linking.openURL(url);
+    };
+
+    const activeDevMode = () => {
+        toast.success('Mode développeur activé');
+        setDevMode(true)
+    };
+
+    const clicAvatar = () => {
+        // Efface le timer précédent s'il existe
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+
+        // Incrémente le compteur
+        const nouveauCompteur = compteurClics + 1;
+        setCompteurClics(nouveauCompteur);
+
+        // Si 10 clics atteints, exécute la fonction et réinitialise
+        if (nouveauCompteur >= 10) {
+            activeDevMode();
+            setCompteurClics(0);
+            return;
+        }
+
+        // Définit un timer pour réinitialiser après 3 secondes d'inactivité
+        timerRef.current = setTimeout(() => {
+            setCompteurClics(0);
+        }, 3000);
     };
 
     const styles = StyleSheet.create({
@@ -279,6 +310,20 @@ const ProfileScreen = () => {
             color: '#FF5252',
             marginLeft: 8,
         },
+        logButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            padding: 15,
+            elevation: 2,
+        },
+        logText: {
+            fontSize: 16,
+            fontWeight: '600',
+            marginLeft: 8,
+        },
         credits: {
             marginTop: 30,
             alignItems: 'center',
@@ -445,9 +490,9 @@ const ProfileScreen = () => {
                     <Text style={styles.sectionTitle}>À propos</Text>
                     <View style={styles.card}>
                         <View style={styles.developerCard}>
-                            <View style={styles.avatarDev}>
+                            <Pressable style={styles.avatarDev} onPress={clicAvatar}>
                                 <User size={40} color="white" />
-                            </View>
+                            </Pressable>
                             <Text style={styles.developerName}>Jean-Pierre Dupuis</Text>
                             <Text style={styles.developerTitle}>Concepteur & Développeur Full-Stack</Text>
                             <View style={styles.socialLinks}>
@@ -480,6 +525,21 @@ const ProfileScreen = () => {
                     </View>
                 </View>
 
+                {/* Logs */}
+                {devMode && (
+                    <View style={[styles.section, { flexDirection: "row", gap: 10 }]}>
+                        <TouchableOpacity style={[styles.logButton, { flex: 1 }]} onPress={() => goToSettingPage('DevMode')}>
+                            <Ionicons name="code" size={20} color="#4A6FE1" />
+                            <Text style={styles.logText}>Mode développeur</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.logButton} onPress={() => setDevMode(false)}>
+                            <Ionicons name="close" size={20} color="#FF3B30" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
+
                 {/* Logout */}
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -491,7 +551,7 @@ const ProfileScreen = () => {
                 {/* Credits */}
                 <View style={styles.credits}>
                     <Text style={styles.creditsText}>StudX v{version}</Text>
-                    <Text>Build Version : {buildId}</Text>
+                    <Text>{uniqueIdentifier}</Text>
                     <Text style={styles.creditsSubtext}>Développé par Jean-Pierre DUPUIS</Text>
                     <Text style={styles.creditsSubtext}>© {new Date().getFullYear()} Tous droits réservés</Text>
                 </View>

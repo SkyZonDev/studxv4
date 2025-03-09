@@ -18,7 +18,7 @@ const HomeScreen = () => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
-    const { userData, loading, isAuthenticated } = useUser();
+    const { userData, loading, isAuthenticated, getUpdate } = useUser();
     const [greeting, setGreeting] = useState(() => {
         const currentHour = new Date().getHours();
         if (currentHour < 12) return 'Bonjour';
@@ -40,6 +40,13 @@ const HomeScreen = () => {
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [showCourseDetails, setShowCourseDetails] = useState(false);
 
+    useEffect(() => {
+        const verifyVersion = async () => {
+            await getUpdate();
+        }
+
+        verifyVersion();
+    }, []);
 
     // Mettre à jour les prochains cours
     useEffect(() => {

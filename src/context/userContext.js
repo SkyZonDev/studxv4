@@ -1,13 +1,19 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import logger from '../services/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import UserService from '../services/userService';
 import { useToast } from '../hooks/useToast';
 import ApiClient from '../services/apiClient';
+import { Linking } from 'react-native';
+import Constants from 'expo-constants';
+
+const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
 
 // Clés pour le stockage sécurisé des données dans SecureStore
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
+    ID: 'unique_id',
     USERNAME: 'auth_username',
     PASSWORD: 'auth_password',
     REMEMBER_ME: 'auth_remember_me',
@@ -24,8 +30,8 @@ const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
 
 /**
- * Provider du contexte utilisateur
- * Gère l'authentification, les informations utilisateur et les interactions avec SecureStore
+ * @description Provider du contexte utilisateur
+ * @info Gère l'authentification, les informations utilisateur et les interactions avec SecureStore
  */
 export const UserProvider = ({ children }) => {
     // Initialisation du service utilisateur
@@ -49,10 +55,59 @@ export const UserProvider = ({ children }) => {
     const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
     const [storedUsername, setStoredUsername] = useState(null);
 
+    const generateUniqueID = async () => {
+        try {
+            setError(null);
+
+            const storedID = await SecureStore.getItemAsync(STORAGE_KEYS.ID);
+            if (storedID) return;
+
+            const { data } = await userService.getUniqueID();
+
+            if (Object.keys(data).length) {
+                try {
+                    await SecureStore.setItemAsync(STORAGE_KEYS.ID, data.id);
+                    logger.info('Identifiant unique généré');
+                    return toast.success(
+                        'Identifiant unique générer',
+                        'Cet ID permettra de facilité l\'aide pour la détection des problèmes'
+                    )
+                } catch (error) {
+
+                    return toast.success(
+                        'Impossible d\'enregistrer l\'identifiant unique',
+                        'Une erreur est survenue lors de l\'enregistrement de votre unique ID'
+                    )
+                }
+            }
+
+            toast.error(
+                'Impossible de récupérer l\'identifiant unique',
+                'Cet ID permettra de facilité l\'aide pour la détection des problèmes',
+                {
+                    duration: 5000
+                }
+            );
+        } catch (error) {
+            toast.error('Une erreur est survenue', 'Impossible de récupérer l\'identifiant unique');
+        }
+    }
+
+    const getUniqueID = async () => {
+        try {
+            const storedID = await SecureStore.getItemAsync(STORAGE_KEYS.ID);
+            return storedID;
+        } catch (error) {
+            logger.error('Impossible de récupérer l\'ID unique', error)
+            toast.error('Une erreur est survenue', 'Impossible de récupérer l\'unique ID');
+        }
+    }
+
     // Vérifier la disponibilité de la biométrie au chargement
     useEffect(() => {
         const initializeApp = async () => {
             try {
+                await generateUniqueID();
                 // Vérifier d'abord la biométrie
                 const compatible = await LocalAuthentication.hasHardwareAsync();
                 const enrolled = await LocalAuthentication.isEnrolledAsync();
@@ -72,8 +127,8 @@ export const UserProvider = ({ children }) => {
     }, []);
 
     /**
-     * Charge les données utilisateur stockées au démarrage de l'application
-     * Propose l'authentification biométrique si disponible
+     * @description Charge les données utilisateur stockées au démarrage de l'application
+     * @info Propose l'authentification biométrique si disponible
      */
     const loadStoredUserData = async (biometricAvailable) => {
         try {
@@ -117,7 +172,7 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Authentification avec la biométrie (empreinte digitale ou Face ID)
+     * @description Authentification avec la biométrie (empreinte digitale ou Face ID)
      */
     const authenticateWithBiometrics = async () => {
         try {
@@ -135,7 +190,7 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Connexion avec les identifiants stockés après authentification biométrique
+     * @description Connexion avec les identifiants stockés après authentification biométrique
      */
     const loginWithStoredCredentials = async (username, password) => {
         try {
@@ -170,7 +225,7 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Connexion avec identifiant et mot de passe
+     * @description Connexion avec identifiant et mot de passe
      * @param {string} username - Nom d'utilisateur
      * @param {string} password - Mot de passe
      * @param {boolean} rememberMe - Option pour mémoriser les identifiants
@@ -178,7 +233,6 @@ export const UserProvider = ({ children }) => {
      */
     const login = async (username, password, rememberMe = false, profileId = "") => {
         try {
-            setError(null);
             setLoading(true);
 
             // Appel au service d'authentification
@@ -202,16 +256,19 @@ export const UserProvider = ({ children }) => {
                     await SecureStore.setItemAsync(STORAGE_KEYS.PASSWORD, password);
                     await SecureStore.setItemAsync(STORAGE_KEYS.REMEMBER_ME, 'true');
                 }
+
+                logger.info('Utilisateur connecté avec succès');
                 toast.success({
                     title: result.title,
                     duration: 3000,
                     position: toast.positions.TOP
                 });
             } else {
-                toast.error({
+                logger.warn('Erreur lors de la connexion', {
                     title: result.title,
                     description: result.detail
-                });
+                })
+                toast.warning(result.title, result.detail);
             }
         } catch (err) {
             console.error('Erreur de connexion:', err);
@@ -228,8 +285,8 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Connexion avec le mot de passe uniquement
-     * Utilisé lorsque la biométrie échoue ou n'est pas disponible
+     * @description Connexion avec le mot de passe uniquement
+     * @info Utilisé lorsque la biométrie échoue ou n'est pas disponible
      */
     const loginWithPasswordOnly = async (password) => {
         try {
@@ -257,9 +314,9 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Rafraîchit les cookies de l'utilisateur en utilisant les identifiants stockés dans l'état ou dans le SecureStore.
+     * @description Rafraîchit les cookies de l'utilisateur en utilisant les identifiants stockés dans l'état ou dans le SecureStore.
      *
-     * La fonction tente d'abord d'utiliser les identifiants disponibles dans l'état actuel.
+     * @info La fonction tente d'abord d'utiliser les identifiants disponibles dans l'état actuel.
      * Si ceux-ci échouent ou ne sont pas disponibles, elle essaie d'utiliser ceux stockés dans le SecureStore.
      * En cas d'échec des deux tentatives, l'utilisateur est déconnecté et une notification d'erreur est affichée.
      *
@@ -314,7 +371,7 @@ export const UserProvider = ({ children }) => {
     }
 
     /**
-     * Déconnexion de l'utilisateur
+     * @description Déconnexion de l'utilisateur
      * Supprime toutes les données stockées dans SecureStore
      */
     const logout = async () => {
@@ -355,20 +412,41 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Récupère les données du calendrier de l'utilisateur
+     * @description Récupère les données du calendrier de l'utilisateur
+     * @param {string} path - Chemin pour accéder au calendrier
+     * @returns {Promise<Object>} Objet contenant le statut de la requête et les données ou l'erreur
      */
     const getCalendar = async (path) => {
         try {
             setError(null);
-            const calendar = await userService.getCalendar(path, userCookies);
-            const result = ApiClient.handleApiResponse(calendar);
 
+            // Fonction pour effectuer la requête du calendrier
+            const fetchCalendar = async () => {
+                const calendar = await userService.getCalendar(path, userCookies);
+                return ApiClient.handleApiResponse(calendar);
+            };
+
+            // Première tentative de récupération du calendrier
+            let result = await fetchCalendar();
+
+            // Si erreur 400 (session expirée), on rafraîchit les cookies et on réessaie
+            if (!result.success && result.statusCode === 400) {
+                const { success: refreshSuccess } = await refreshCookies();
+
+                if (refreshSuccess) {
+                    // Deuxième tentative avec les nouveaux cookies
+                    result = await fetchCalendar();
+                }
+            }
+
+            // Traitement du résultat final
             if (result.success) {
-                return { success: true, data: result.data }
+                return { success: true, data: result.data };
             } else {
-                return { success: false, error: result }
+                return { success: false, error: result };
             }
         } catch (err) {
+            console.error('Erreur lors de la récupération du calendrier:', err);
             return {
                 success: false,
                 error: {
@@ -380,51 +458,102 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Récupère les clés du calendrier de l'utilisateur
+     * @description Récupère les clés du calendrier de l'utilisateur
+     * @returns {Promise<Object>} Objet contenant le statut de la requête et les données de la clé ou l'erreur
      */
     const getCalendarKey = async () => {
         try {
             setError(null);
-            const emploiDuTemps = userRoutes.find(route => route.title === "Mon emploi du temps");
 
-            if (emploiDuTemps && emploiDuTemps.items) {
-                // Rechercher le sous-élément "Mon calendrier"
-                const calendrier = emploiDuTemps.items.find(item => item.title === "Mon calendrier");
+            // Trouver le chemin du calendrier
+            const emploiDuTemps = userRoutes?.find(route => route.title === "Mon emploi du temps");
+            const calendrier = emploiDuTemps?.items?.find(item => item.title === "Mon calendrier");
 
-                if (calendrier) {
-                    const apiResponse = await userService.getCalendarKey(calendrier.route, userCookies);
-                    const result = ApiClient.handleApiResponse(apiResponse);
-
-                    if (result.success) {
-                        return { success: true, data: { key: result.data }};
-                    } else {
-                        return { success: false, error: result };
+            if (!calendrier?.route) {
+                return {
+                    success: false,
+                    error: {
+                        title: "Route du calendrier non trouvée",
+                        detail: "Impossible de trouver la section 'Mon calendrier' dans le menu"
                     }
+                };
+            }
+
+            // Fonction pour effectuer la requête de la clé du calendrier
+            const fetchCalendarKey = async () => {
+                const apiResponse = await userService.getCalendarKey(calendrier.route, userCookies);
+                return ApiClient.handleApiResponse(apiResponse);
+            };
+
+            // Première tentative de récupération de la clé
+            let result = await fetchCalendarKey();
+
+            // Si erreur 400 (session expirée), on rafraîchit les cookies et on réessaie
+            if (!result.success && result.statusCode >= 400 && result.statusCode < 500) {
+                const { success: refreshSuccess } = await refreshCookies();
+
+                if (refreshSuccess) {
+                    // Deuxième tentative avec les nouveaux cookies
+                    result = await fetchCalendarKey();
                 }
             }
+
+            // Traitement du résultat final
+            if (result.success) {
+                return { success: true, data: { key: result.data } };
+            } else {
+                return { success: false, error: result };
+            }
         } catch (err) {
+            console.error('Erreur lors de la récupération de la clé du calendrier:', err);
             setError(err.message);
             return {
                 success: false,
                 error: {
-                    title: err.message,
-                    detail: ''
+                    title: 'Une erreur est survenue',
+                    detail: err.message || ''
                 }
             };
         }
     };
 
     /**
-     * Récupère les données des absences de l'utilisateur
+     * @description Récupère les données des absences de l'utilisateur
+     * @returns {Promise<Object>} Objet contenant le statut de la requête et les données de la clé ou l'erreur
      */
     const getAbsences = async () => {
         try {
             setError(null);
             const absences = userRoutes.find(route => route.title === "Mes absences");
-            const apiResponse = await userService.getAbsences(absences.route, userCookies);
-            const result = ApiClient.handleApiResponse(apiResponse);
 
+            if (!absences?.route) {
+                return {
+                    success: false,
+                    error: {
+                        title: "Route des absences non trouvée",
+                        detail: "Impossible de trouver la section 'Mes absences' dans le menu"
+                    }
+                };
+            }
 
+            const fetchAbsences = async () => {
+                const apiResponse = await userService.getAbsences(absences.route, userCookies);
+                return ApiClient.handleApiResponse(apiResponse);
+            }
+
+            let result = await fetchAbsences();
+
+            // Si erreur 400 (session expirée), on rafraîchit les cookies et on réessaie
+            if (!result.success && result.statusCode >= 400 && result.statusCode < 500) {
+                const { success: refreshSuccess } = await refreshCookies();
+
+                if (refreshSuccess) {
+                    // Deuxième tentative avec les nouveaux cookies
+                    result = await fetchAbsences();
+                }
+            }
+
+            // Traitement du résultat final
             if (result.success) {
                 return { success: true, data: result.data };
             } else {
@@ -437,31 +566,80 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * Récupère les notes de l'utilisateur
+     * @description Récupère les notes de l'utilisateur
+     * @returns {Promise<Object>} Objet contenant le statut de la requête et les données de la clé ou l'erreur
      */
     const getGrades = async () => {
         try {
-            setError(null);
-            const myGrades = userRoutes.find(route => route.title === "Mes notes");
+            const myGrades = userRoutes?.find(route => route.title === "Mes notes");
+            const grades = myGrades?.items?.find(item => item.title === "Mes évaluations");
 
-            if (myGrades && myGrades.items) {
-                // Rechercher le sous-élément "Mon calendrier"
-                const grades = myGrades.items.find(item => item.title === "Mes évaluations");
-
-                if (grades) {
-                    const apiResponse = await userService.getGrades(grades.route, userCookies);
-                    const result = ApiClient.handleApiResponse(apiResponse);
-
-                    if (result.success) {
-                        return { success: true, data: result.data };
-                    } else {
-                        return { success: false, error: result };
+            if (!grades?.route) {
+                return {
+                    success: false,
+                    error: {
+                        title: "Route du des notes non trouvée",
+                        detail: "Impossible de trouver la section 'Mes notes' dans le menu"
                     }
+                };
+            }
+
+            const fetchGrades = async () => {
+                const apiResponse = await userService.getGrades(grades.route, userCookies);
+                return ApiClient.handleApiResponse(apiResponse);
+
+            }
+
+            let result = await fetchGrades()
+
+            // Si erreur 400 (session expirée), on rafraîchit les cookies et on réessaie
+            if (!result.success && result.statusCode >= 400 && result.statusCode < 500) {
+                const { success: refreshSuccess } = await refreshCookies();
+
+                if (refreshSuccess) {
+                    // Deuxième tentative avec les nouveaux cookies
+                    result = await fetchGrades();
                 }
+            }
+
+            // Traitement du résultat final
+            if (result.success) {
+                return { success: true, data: result.data };
+            } else {
+                return { success: false, error: result };
             }
         } catch (err) {
             setError(err.message);
             return { success: false, error: err.message };
+        }
+    };
+
+    /**
+    * @description Récupère un identifiant unique
+    */
+    const getUpdate = async () => {
+        try {
+            setError(null);
+            const result = await userService.getUpdate();
+            if (result.errors.length > 0) return
+
+            const data = result.data[`last_release_${version.split(' ')[1].toLowerCase()}`]
+
+            const newVersionAvailable = userService.isNewerVersion(version, data.version)
+            if (!newVersionAvailable || !data.authorized) return
+
+            toast.withAction(
+                'Nouvelle version disponible',
+                `La version ${data.version} est disponible, de nouvelle amélioration on été rajouté`,
+                () => Linking.openURL('https://studx.ddns.net/'),
+                {
+                    actionText: 'Allez voir 👀'
+                }, {
+                isPersistent: true
+            }
+            )
+        } catch (error) {
+
         }
     };
 
@@ -484,7 +662,9 @@ export const UserProvider = ({ children }) => {
         getCalendar,
         getCalendarKey,
         getAbsences,
-        getGrades
+        getGrades,
+        getUpdate,
+        getUniqueID
     };
 
     return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;

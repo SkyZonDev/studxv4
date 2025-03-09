@@ -204,7 +204,7 @@ export const AbsencesProvider = ({ children }) => {
                 setHasChanges(false);
                 return true;
             } else {
-                setError(error.title || 'Erreur lors du chargement des absences');
+                toast.error(error.title || 'Absences erreur', 'Erreur lors du chargement des absences');
                 // Si on a des données en cache, on les utilise même si elles sont périmées
                 const cachedData = await loadFromStorage();
                 if (cachedData) {
@@ -214,7 +214,7 @@ export const AbsencesProvider = ({ children }) => {
                 setIsLoading(false);
 
                 toast.error({
-                    title: error.title,
+                    title: error.title || 'Erreur lors du chargement des absences',
                     description: error.detail
                 });
 
@@ -229,10 +229,7 @@ export const AbsencesProvider = ({ children }) => {
             }
             setIsLoading(false);
 
-            toast.error({
-                title: 'Erreur lors de la récupération des absences',
-                description: err.message
-            });
+            toast.error('Erreur lors de la récupération des absences', err.message );
 
             return false;
         }

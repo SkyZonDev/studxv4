@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
-const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
+import * as SecureStore from 'expo-secure-store';
 
+const version = Constants.expoConfig?.version || Constants.manifest?.version || 'non disponible';
 
 class ApiClient {
     constructor(baseUrl = '', defaultOptions = {}) {
@@ -9,11 +10,22 @@ class ApiClient {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'x-app-version': version
+                'x-app-version': version,
             },
             timeout: 30000, // 30 secondes par défaut
             ...defaultOptions
         };
+        this.init(); // Appel à une méthode async pour récupérer l'id
+    }
+
+    async init() {
+        this.id = await this._getAppID();
+        this.defaultOptions.headers['user'] = JSON.stringify({ id: this.id });
+    }
+
+    async _getAppID() {
+        const id = await SecureStore.getItemAsync('unique_id');
+        return id || 'id_non_trouvé';
     }
 
     /**

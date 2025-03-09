@@ -79,7 +79,7 @@ const AbsencesScreen = () => {
                 }
             }
         } catch (error) {
-            console.log('Erreur lors du téléchargement:', error);
+            ('Erreur lors du téléchargement:', error);
         }
     };
 
