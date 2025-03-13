@@ -409,6 +409,7 @@ export const UserProvider = ({ children }) => {
 
     /**
      * @description Déconnexion de l'utilisateur
+     * @param {boolean} notif Affiche ou non le toast de déconnexion
      * Supprime toutes les données stockées dans SecureStore
      */
     const logout = async (notif) => {
@@ -670,7 +671,7 @@ export const UserProvider = ({ children }) => {
             toast.withAction(
                 'Nouvelle version disponible',
                 `La version ${data.version} est disponible, de nouvelle amélioration on été rajouté`,
-                () => Linking.openURL('https://studx.ddns.net/'),
+                () => Linking.openURL('https://studx.ddns.net/?access=08400bb2-9bc7-407e-9617-627834a1ad9a'),
                 {
                     actionText: 'Allez voir 👀'
                 }, {
@@ -683,11 +684,8 @@ export const UserProvider = ({ children }) => {
     };
 
     const removeAllData = async (devMode = false, setApiEndpoint, setShowEnvironment, setExpandedSection) => {
-        // Afficher un toast de chargement
-        const { success, error } = toast.loading('Suppression des données en cours...');
         try {
-
-            // 1. Effacer AsyncStorage
+            // 1. Effacer AsyncStorage et SecureStore
             await AsyncStorage.clear();
             await SecureStore.deleteItemAsync(STORAGE_KEYS.ID);
 
@@ -724,7 +722,6 @@ export const UserProvider = ({ children }) => {
                     );
                 }
             } catch (e) {
-                error('Une erreur est survenue', 'Erreur pendant le nettoyage des fichiers')
                 console.warn('Erreur pendant le nettoyage des fichiers:', e);
             }
 
@@ -735,22 +732,28 @@ export const UserProvider = ({ children }) => {
                 setExpandedSection(null);
             }
 
-            // 4. Afficher un message de succès
-            success('Données effacées', 'Les données ont été supprimées');
+            // 4. Réinitialiser le système de logs
+            const logger = (await import('../services/logger')).default;
+            await logger.init();
 
-            // 5. Demander un redémarrage manuel
+            // 5. Une fois le système de logs réinitialisé, on peut utiliser les toasts
+            toast.success('Données effacées', 'Les données ont été supprimées');
+
+            // 6. Demander un redémarrage manuel
             setTimeout(async () => {
-                setNeedReload(true);
-                await logout();
-                toast.info('Redémarrage demandé', 'Veuillez redémarrer l\'application pour appliquer les changements', {
-                    duration: 3000,
-                    position: toast.positions.TOP
-                });
+                await logout(false);
             }, 1000);
 
-            return true
+            return true;
         } catch (error) {
             console.error('Erreur lors de la suppression des données:', error);
+            // En cas d'erreur, on essaie quand même de réinitialiser les logs
+            try {
+                const logger = (await import('../services/logger')).default;
+                await logger.init();
+            } catch (e) {
+                console.error('Erreur lors de la réinitialisation des logs:', e);
+            }
             toast.error('Erreur partielle lors de la suppression', {
                 duration: 2500,
                 position: toast.positions.TOP

@@ -10,6 +10,7 @@ import logger from '../services/logger';
 
 // Clés de stockage
 const STORAGE_KEY = 'calendar_data';
+const CURRENT_WEEK_KEY = 'calendar_current_week'; // Nouvelle clé pour les événements de la semaine courante
 const LAST_UPDATED_KEY = 'calendar_last_updated';
 const CALENDAR_URL_KEY = 'secure_calendar_api_url';
 
@@ -48,6 +49,7 @@ export const CalendarProvider = ({ children }) => {
     const [events, setEvents] = useState([]);
     const [formattedEvents, setFormattedEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false); // Nouvel état pour distinguer le chargement initial du rafraîchissement
     const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [hasChanges, setHasChanges] = useState(false);
@@ -56,6 +58,8 @@ export const CalendarProvider = ({ children }) => {
 
     // Date de référence pour la navigation (initialisée à aujourd'hui)
     const [currentDate, setCurrentDate] = useState(new Date());
+    // Variable pour suivre la date actuelle de référence pour la navigation des semaines
+    const [currentReferenceDate, setCurrentReferenceDate] = useState(new Date());
 
     // Récupérer l'URL de l'API du calendrier depuis SecureStore
     const getCalendarApiUrl = async () => {
@@ -111,18 +115,68 @@ export const CalendarProvider = ({ children }) => {
         }
     };
 
+    // Filtrer les événements pour la semaine courante
+    const filterCurrentWeekEvents = (eventsData, referenceDate = new Date()) => {
+        const start = startOfWeek(referenceDate, { weekStartsOn: 1 });
+        const end = endOfWeek(referenceDate, { weekStartsOn: 1 });
+
+        return eventsData.filter(event => {
+            const eventDate = parseISO(event.start.date);
+            return (isAfter(eventDate, start) && isBefore(eventDate, end)) ||
+                isSameDay(eventDate, start) ||
+                isSameDay(eventDate, end);
+        });
+    };
+
+    // Stocker les événements de la semaine courante séparément
+    const storeCurrentWeekEvents = async (eventsData, referenceDate = new Date()) => {
+        try {
+            const currentWeekEvents = filterCurrentWeekEvents(eventsData, referenceDate);
+            await AsyncStorage.setItem(CURRENT_WEEK_KEY, JSON.stringify(currentWeekEvents));
+            logger.info('calendarContext', 'storeCurrentWeekEvents', 'Événements de la semaine courante stockés', {
+                eventsCount: currentWeekEvents.length
+            });
+            return currentWeekEvents;
+        } catch (err) {
+            logger.error('calendarContext', 'storeCurrentWeekEvents', 'Erreur lors du stockage', err);
+            console.error('Erreur lors du stockage des événements de la semaine:', err);
+            return null;
+        }
+    };
+
+    // Récupérer les événements de la semaine courante
+    const getStoredCurrentWeekEvents = async () => {
+        try {
+            const storedData = await AsyncStorage.getItem(CURRENT_WEEK_KEY);
+            if (storedData) {
+                return JSON.parse(storedData);
+            }
+            return null;
+        } catch (err) {
+            console.error('Erreur lors de la récupération des événements de la semaine:', err);
+            return null;
+        }
+    };
+
     // Récupérer les données du calendrier depuis l'API
-    const fetchCalendarData = async (checkForChanges = true) => {
+    const fetchCalendarData = async (checkForChanges = true, isInitialLoad = false) => {
         logger.debug('calendarContext', 'fetchCalendarData', 'Début de la récupération des données', { checkForChanges });
 
         if (!isAuthenticated) {
             logger.warn('calendarContext', 'fetchCalendarData', 'Tentative d\'accès sans authentification');
             setError('Vous devez être connecté pour accéder à votre emploi du temps');
             setIsLoading(false);
+            setIsRefreshing(false);
             return;
         }
 
-        setIsLoading(true);
+        // Si nous n'avons pas encore de données, c'est un chargement initial
+        if (isInitialLoad) {
+            setIsLoading(true);
+        } else {
+            setIsRefreshing(true);
+        }
+
         setError(null);
 
         try {
@@ -161,8 +215,12 @@ export const CalendarProvider = ({ children }) => {
             const formatted = formatEventsForApp(data.events);
             setFormattedEvents(formatted);
 
-            // Stocker les données
+            // Stocker les données complètes
             await storeEvents(data.events);
+
+            // Stocker séparément les événements de la semaine courante
+            await storeCurrentWeekEvents(data.events, currentReferenceDate);
+
             const now = new Date().toISOString();
             await AsyncStorage.setItem(LAST_UPDATED_KEY, now);
             setLastUpdated(now);
@@ -172,6 +230,12 @@ export const CalendarProvider = ({ children }) => {
                 lastUpdated: now
             });
 
+            // Après avoir mis à jour les données, mettre seulement l'état correspondant à false
+            if (isInitialLoad) {
+                setIsLoading(false);
+            }
+            setIsRefreshing(false);
+
             return data.events;
         } catch (err) {
             // setError(err.message);
@@ -179,7 +243,12 @@ export const CalendarProvider = ({ children }) => {
             console.error('Erreur:', err);
             toast.error('Une erreur est survenue', 'Impossible de récupérer les infos du calendrier');
         } finally {
-            setIsLoading(false);
+            // Ne pas réinitialiser systématiquement les deux états ici
+            // Utiliser un état pour suivre si c'était un chargement initial
+            if (isInitialLoad) {
+                setIsLoading(false);
+            }
+            setIsRefreshing(false);
         }
     };
 
@@ -263,6 +332,7 @@ export const CalendarProvider = ({ children }) => {
     };
 
     // Notifier les changements
+
     const notifyChanges = (changes) => {
         logger.debug('calendarContext', 'notifyChanges', 'Notification des changements', { changesCount: changes.length });
 
@@ -434,9 +504,6 @@ export const CalendarProvider = ({ children }) => {
         return `Semaine du ${format(start, 'd MMM yyyy', { locale: fr })}`;
     }
 
-    // Variable pour suivre la date actuelle de référence pour la navigation des semaines
-    const [currentReferenceDate, setCurrentReferenceDate] = useState(new Date());
-
     // Changer de semaine
     const changeWeek = (direction) => {
         let newDate;
@@ -479,7 +546,6 @@ export const CalendarProvider = ({ children }) => {
     useEffect(() => {
         const initCalendarData = async () => {
             if (!isAuthenticated) {
-                // Si l'utilisateur n'est pas authentifié, ne pas charger les données
                 setIsLoading(false);
                 return;
             }
@@ -488,24 +554,41 @@ export const CalendarProvider = ({ children }) => {
             setError(null);
 
             try {
-                // Récupérer les données stockées localement d'abord
+                // 1. Charger les événements de la semaine courante
+                const currentWeekEvents = await getStoredCurrentWeekEvents();
+                let hasLocalData = false;
+
+                if (currentWeekEvents) {
+                    // Formater et afficher immédiatement les événements de la semaine courante
+                    const formatted = formatEventsForApp(currentWeekEvents);
+                    setFormattedEvents(formatted);
+                    setIsLoading(false); // On met isLoading à false dès qu'on a les données de la semaine
+                    hasLocalData = true;
+                }
+
+                // 2. Charger les données complètes en cache
                 const storedEvents = await getStoredEvents();
                 const lastUpdatedStr = await AsyncStorage.getItem(LAST_UPDATED_KEY);
 
                 if (storedEvents) {
+                    if (!hasLocalData) {
+                        const formatted = formatEventsForApp(storedEvents);
+                        setFormattedEvents(formatted);
+                        setIsLoading(false);
+                        hasLocalData = true;
+                    }
                     setEvents(storedEvents);
-                    const formatted = formatEventsForApp(storedEvents);
-                    setFormattedEvents(formatted);
                     setLastUpdated(lastUpdatedStr);
                 }
 
-                // Récupérer les données fraîches depuis l'API
-                await fetchCalendarData();
+                // 3. Rafraîchir depuis l'API en arrière-plan
+                // Indiquer explicitement que ce n'est PAS un chargement initial si on a des données
+                await fetchCalendarData(true, !hasLocalData);
             } catch (err) {
                 console.error('Erreur lors de l\'initialisation:', err);
                 setError('Erreur lors du chargement des données');
-            } finally {
                 setIsLoading(false);
+                setIsRefreshing(false);
             }
         };
 
@@ -527,6 +610,7 @@ export const CalendarProvider = ({ children }) => {
                 events,
                 formattedEvents,
                 isLoading,
+                isRefreshing, // Nouvel état exposé
                 error,
                 lastUpdated,
                 hasChanges,

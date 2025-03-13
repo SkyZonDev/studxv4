@@ -24,7 +24,7 @@ export const ToastProvider = ({
 
     // Fonction pour gérer le changement de hauteur d'un toast
     const handleToastHeightChange = useCallback((id, height) => {
-        logger.debug('toastContext', 'handleToastHeightChange', `Toast height changed for ID: ${id}`, { height });
+        // logger.debug('toastContext', 'handleToastHeightChange', `Toast height changed for ID: ${id}`, { height });
         setToastHeights(prev => {
             if (prev[id] === height) return prev;
             return { ...prev, [id]: height };
@@ -41,16 +41,16 @@ export const ToastProvider = ({
 
     // Fonction optimisée pour traiter plusieurs toasts en parallèle
     const processQueue = useCallback(() => {
-        logger.debug('toastContext', 'processQueue', `Processing queue. Current count: ${processingCount.current}, Queue length: ${toastQueue.current.length}`);
+        // logger.debug('toastContext', 'processQueue', `Processing queue. Current count: ${processingCount.current}, Queue length: ${toastQueue.current.length}`);
         if (processingCount.current >= maxVisible || toastQueue.current.length === 0) return;
 
         const nextToast = toastQueue.current.shift();
         processingCount.current += 1;
 
-        logger.info('toastContext', 'processQueue', 'Processing new toast', {
-            toastId: nextToast.id,
-            type: nextToast.type
-        });
+        // logger.info('toastContext', 'processQueue', 'Processing new toast', {
+        //     toastId: nextToast.id,
+        //     type: nextToast.type
+        // });
 
         // Utiliser une seule mise à jour d'état
         setToasts(prev => {
@@ -81,11 +81,11 @@ export const ToastProvider = ({
         typeOrOptions = ToastType.INFO,
         maybeOptions = {}
     ) => {
-        logger.info('toastContext', 'addToast', 'Adding new toast', {
-            titleOrConfig,
-            descriptionOrType,
-            typeOrOptions
-        });
+        // logger.info('toastContext', 'addToast', 'Adding new toast', {
+        //     titleOrConfig,
+        //     descriptionOrType,
+        //     typeOrOptions
+        // });
 
         // Déterminer si nous utilisons le nouveau format ou l'ancien
         let title, description, type, options;
@@ -146,11 +146,11 @@ export const ToastProvider = ({
             isPersistent,
         };
 
-        logger.debug('toastContext', 'addToast', 'Toast created', {
-            id: newToast.id,
-            type: newToast.type,
-            position: newToast.position
-        });
+        // logger.debug('toastContext', 'addToast', 'Toast created', {
+        //     id: newToast.id,
+        //     type: newToast.type,
+        //     position: newToast.position
+        // });
 
         toastQueue.current.push(newToast);
         requestAnimationFrame(() => {
@@ -162,7 +162,7 @@ export const ToastProvider = ({
     }, [defaultPosition, processQueue]);
 
     const removeToast = useCallback((id) => {
-        logger.info('toastContext', 'removeToast', `Removing toast with ID: ${id}`);
+        // logger.info('toastContext', 'removeToast', `Removing toast with ID: ${id}`);
         toastQueue.current = toastQueue.current.filter(toast => toast.id !== id);
 
         setToasts(prev => {
@@ -191,10 +191,10 @@ export const ToastProvider = ({
     }, [processQueue]);
 
     const removeAllToasts = useCallback(() => {
-        logger.info('toastContext', 'removeAllToasts', 'Removing all toasts');
+        // logger.info('toastContext', 'removeAllToasts', 'Removing all toasts');
         toastQueue.current = [];
         setToasts(prev => {
-            logger.debug('toastContext', 'removeAllToasts', `Removing ${prev.length} toasts`);
+            // logger.debug('toastContext', 'removeAllToasts', `Removing ${prev.length} toasts`);
             // Appeler onClose pour chaque toast si défini
             prev.forEach(toast => {
                 if (toast.onClose) {

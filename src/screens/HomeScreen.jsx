@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, SafeAreaView, StatusBar, FlatList, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,40 @@ import ScheduleModal from '../components/modal/ScheduleModal';
 import { useGrades } from '../context/gradesContext';
 import GradesCard from '../components/card/GradesCard';
 
+const SectionTitleWithRefresh = ({ title, isRefreshing }) => {
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (isRefreshing) {
+            Animated.loop(
+                Animated.timing(rotateAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                })
+            ).start();
+        } else {
+            rotateAnim.setValue(0);
+        }
+    }, [isRefreshing]);
+
+    const spin = rotateAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
+    });
+
+    return (
+        <View style={styles.sectionTitleContainer}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            {isRefreshing && (
+                <Animated.View style={{ transform: [{ rotate: spin }], marginLeft: 8 }}>
+                    <Ionicons name="sync" size={16} color="#4A6FE1" />
+                </Animated.View>
+            )}
+        </View>
+    );
+};
+
 const HomeScreen = () => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
@@ -27,7 +61,9 @@ const HomeScreen = () => {
     });
 
     // Contexte du calendrier pour accéder aux événements
-    const { getUpcomingEvents, isLoading } = useCalendar();
+    // Récupérer également isRefreshing pour pouvoir distinguer
+    // le chargement initial du rafraîchissement
+    const { getUpcomingEvents, isLoading, isRefreshing } = useCalendar();
     const { getLastAbsences } = useAbsences();
     const { getTopThreeGrades } = useGrades();
 
@@ -166,13 +202,17 @@ const HomeScreen = () => {
                 {/* Upcoming Classes */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Prochains cours</Text>
+                        <SectionTitleWithRefresh title="Prochains cours" isRefreshing={isRefreshing} />
                         <TouchableOpacity onPress={() => navigateTo('schedule')}>
                             <Text style={styles.seeAllText}>Voir tout</Text>
                         </TouchableOpacity>
                     </View>
 
-                    {isLoading ? (
+                    {/* Indicateur de rafraîchissement */}
+                    {/* {renderCalendarStatus()} */}
+
+                    {/* Modifié pour afficher les cours dès qu'ils sont disponibles */}
+                    {isLoading && upcomingCourses.length === 0 ? (
                         <View style={styles.courseItem}>
                             <Text style={styles.loadingText}>Chargement des cours...</Text>
                         </View>
@@ -352,10 +392,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 12,
     },
+    sectionTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
+        letterSpacing: 0.3,
+        textShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
     },
     seeAllText: {
         fontSize: 14,
@@ -400,28 +446,33 @@ const styles = StyleSheet.create({
     courseItem: {
         flexDirection: 'row',
         backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 10,
-        marginBottom: 10,
-        elevation: 1,
+        borderRadius: 16,
+        padding: 12,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     currentCourseItem: {
         borderLeftWidth: 4,
         borderLeftColor: '#4A6FE1',
         backgroundColor: '#F5F9FF',
+        transform: [{ scale: 1.02 }],
     },
     courseTimeContainer: {
-        width: 60,
-        height: 60,
-        backgroundColor: '#E6EFFF',
-        borderRadius: 8,
+        width: 65,
+        height: 65,
+        backgroundColor: '#F0F4FF',
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 14,
     },
     courseTime: {
-        fontSize: 14,
-        fontWeight: 'bold',
+        fontSize: 15,
+        fontWeight: '700',
         color: '#4A6FE1',
     },
     courseDetails: {
@@ -432,20 +483,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 8,
     },
     courseName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
+        color: '#2D3142',
         flex: 1,
     },
     currentBadge: {
-        backgroundColor: '#4A6FE120',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
+        backgroundColor: '#4A6FE110',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
         marginLeft: 8,
+        borderWidth: 1,
+        borderColor: '#4A6FE130',
     },
     currentBadgeText: {
         fontSize: 12,
@@ -455,16 +508,21 @@ const styles = StyleSheet.create({
     courseInfo: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 16,
     },
     infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 12,
+        backgroundColor: '#F8F9FA',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     infoText: {
         fontSize: 12,
-        color: '#757575',
+        color: '#666',
         marginLeft: 4,
+        fontWeight: '500',
     },
     loadingText: {
         fontSize: 14,
@@ -481,6 +539,24 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         flex: 1,
         padding: 10,
+    },
+    // Nouveaux styles pour l'indicateur de rafraîchissement
+    refreshingContainer: {
+        backgroundColor: '#F0F8FF',
+        borderRadius: 12,
+        padding: 8,
+        marginBottom: 12,
+    },
+    refreshingContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    refreshingText: {
+        fontSize: 13,
+        color: '#4A6FE1',
+        fontWeight: '500',
     },
     gradeItem: {
         flexDirection: 'row',

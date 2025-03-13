@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     format, parseISO, startOfWeek, endOfWeek, addDays, isSameDay, isBefore, isAfter,
@@ -35,6 +35,11 @@ export const AbsencesProvider = ({ children }) => {
     const { isAuthenticated, getAbsences, justifyAbsence } = useUser();
     const toast = useToast();
 
+    // Référence pour suivre les appels en cours et éviter les appels multiples
+    const fetchingRef = useRef(false);
+    const lastFetchTimeRef = useRef(0);
+    const DEBOUNCE_DELAY = 2000; // 2 secondes de délai entre les appels
+
     // États du contexte
     const [absences, setAbsences] = useState([]);
     const [filteredAbsences, setFilteredAbsences] = useState([]);
@@ -48,6 +53,53 @@ export const AbsencesProvider = ({ children }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterPeriod, setFilterPeriod] = useState(FILTER_PERIODS.ALL);
     const [ueFilter, setUeFilter] = useState(null); // Pour future fonctionnalité de filtrage par UE
+
+    // Fonction utilitaire pour formater une date ISO - définie en premier pour éviter les problèmes de dépendance
+    const formatDate = useCallback((isoDate) => {
+        if (!isoDate) return '';
+        const date = new Date(isoDate);
+        return format(date, 'dd/MM/yyyy', { locale: fr });
+    }, []);
+
+    // Fonction utilitaire pour formater l'heure depuis un ISO
+    const formatTime = useCallback((isoDate) => {
+        if (!isoDate) return '';
+        const date = new Date(isoDate);
+        return format(date, 'HH:mm', { locale: fr });
+    }, []);
+
+    // Fonction utilitaire pour créer une plage horaire depuis deux ISO
+    const formatTimeRange = useCallback((startISO, endISO) => {
+        if (!startISO || !endISO) return '';
+        return `${formatTime(startISO)} - ${formatTime(endISO)}`;
+    }, [formatTime]);
+
+    // Adapter une absence pour l'affichage - définie avant d'être utilisée dans les dépendances
+    const adaptAbsenceForDisplay = useCallback((absence) => {
+        if (!absence) return null;
+
+        // Formatage de la date et de l'heure
+        const date = formatDate(absence.startTime);
+        const time = formatTimeRange(absence.startTime, absence.endTime);
+
+        // Formatage des enseignants (joindre avec des virgules si multiples)
+        const teacher = absence.teachers.join(', ');
+
+        // Formatage du statut
+        const status = absence.status.justified ? 'Justifiée' : 'Non justifiée';
+
+        // Adaptation pour l'affichage
+        return {
+            ...absence,
+            date,
+            time,
+            teacher,
+            room: absence.location,
+            status,
+            course: absence.courseName,
+            justificationDate: absence.status.justificationDate ? formatDate(absence.status.justificationDate) : null
+        };
+    }, [formatDate, formatTimeRange]);
 
     // Statistiques mémorisées
     const stats = useMemo(() => {
@@ -126,44 +178,15 @@ export const AbsencesProvider = ({ children }) => {
         return ueStats;
     }, [absences]);
 
-    // Fonction pour charger les absences depuis le stockage local
-    const loadFromStorage = useCallback(async () => {
-        // Ajout d'une référence pour éviter les appels multiples
-        if (loadFromStorage.isLoading) {
-            return null;
-        }
+    // Fonction pour déterminer si le cache est valide
+    const isCacheValid = useCallback(() => {
+        if (!lastUpdated) return false;
 
-        loadFromStorage.isLoading = true;
+        const now = new Date();
+        const timeDiff = now.getTime() - lastUpdated.getTime();
 
-        try {
-            const storedData = await AsyncStorage.getItem(STORAGE_KEY);
-            const lastUpdatedString = await AsyncStorage.getItem(LAST_UPDATED_KEY);
-
-            if (storedData) {
-                const parsedData = JSON.parse(storedData);
-
-                // Ne mettre à jour l'état que si les données sont différentes
-                if (JSON.stringify(parsedData) !== JSON.stringify(absences)) {
-                    setAbsences(parsedData);
-                    logger.debug('absencesContext', 'loadFromStorage', `Mise à jour: ${parsedData.length} absences`);
-                }
-
-                if (lastUpdatedString) {
-                    setLastUpdated(new Date(lastUpdatedString));
-                }
-
-                loadFromStorage.isLoading = false;
-                return parsedData;
-            }
-
-            loadFromStorage.isLoading = false;
-            return null;
-        } catch (err) {
-            logger.error('absencesContext', 'loadFromStorage', 'Erreur lors du chargement', { error: err.message });
-            loadFromStorage.isLoading = false;
-            return null;
-        }
-    }, [absences]); // Ajout de absences dans les dépendances
+        return timeDiff < CACHE_DURATION;
+    }, [lastUpdated]);
 
     // Fonction pour sauvegarder les absences dans le stockage local
     const saveToStorage = useCallback(async (data) => {
@@ -177,88 +200,37 @@ export const AbsencesProvider = ({ children }) => {
         }
     }, []);
 
-    // Fonction pour déterminer si le cache est valide
-    const isCacheValid = useCallback(() => {
-        if (!lastUpdated) return false;
-
-        const now = new Date();
-        const timeDiff = now.getTime() - lastUpdated.getTime();
-
-        return timeDiff < CACHE_DURATION;
-    }, [lastUpdated]);
-
-    // Fonction pour charger les absences depuis l'API
-    const fetchAbsences = useCallback(async (forceRefresh = false) => {
-        if (!isAuthenticated) {
-            logger.warn('absencesContext', 'fetchAbsences', 'Non authentifié');
-            setError('Utilisateur non authentifié');
-            setIsLoading(false);
-            return false;
-        }
-
-        // Ajouter une vérification pour éviter les appels inutiles
-        if (!forceRefresh && absences.length > 0 && isCacheValid()) {
-            return true;
-        }
-
-        if (!forceRefresh) {
-            const cachedData = await loadFromStorage();
-            if (cachedData && isCacheValid()) {
-                applyFilters(cachedData, searchQuery, filterPeriod);
-                setIsLoading(false);
-                return true;
-            }
-        }
-
+    // Fonction pour charger les absences depuis le stockage local - simplifiée et avec référence
+    const loadFromStorage = useCallback(async () => {
         try {
-            setIsLoading(true);
-            setError(null);
-            logger.debug('absencesContext', 'fetchAbsences', `Rafraîchissement${forceRefresh ? ' forcé' : ''}`);
+            const storedData = await AsyncStorage.getItem(STORAGE_KEY);
+            const lastUpdatedString = await AsyncStorage.getItem(LAST_UPDATED_KEY);
 
-            const { success, data, error } = await getAbsences();
+            if (storedData) {
+                const parsedData = JSON.parse(storedData);
 
-            if (success) {
-                setAbsences(data);
-                await saveToStorage(data);
-                applyFilters(data, searchQuery, filterPeriod);
-                setIsLoading(false);
-                setHasChanges(false);
-                return true;
-            } else {
-                logger.error('absencesContext', 'fetchAbsences', 'Erreur API', { error });
-                toast.error(error.title || 'Absences erreur', 'Erreur lors du chargement des absences');
+                // Ne pas déclencher de mise à jour d'état si les données sont identiques
+                const currentDataString = JSON.stringify(absences);
+                const newDataString = JSON.stringify(parsedData);
 
-                const cachedData = await loadFromStorage();
-                if (cachedData) {
-                    logger.info('absencesContext', 'fetchAbsences', 'Utilisation des données en cache après erreur');
-                    setAbsences(cachedData);
-                    applyFilters(cachedData, searchQuery, filterPeriod);
+                if (currentDataString !== newDataString) {
+                    setAbsences(parsedData);
+                    logger.debug('absencesContext', 'loadFromStorage', `Mise à jour: ${parsedData.length} absences`);
                 }
-                setIsLoading(false);
-                return false;
+
+                if (lastUpdatedString) {
+                    setLastUpdated(new Date(lastUpdatedString));
+                }
+
+                return parsedData;
             }
+
+            return null;
         } catch (err) {
-            logger.error('absencesContext', 'fetchAbsences', 'Erreur non gérée', { error: err.message });
-            // Si on a des données en cache, on les utilise même si elles sont périmées
-            const cachedData = await loadFromStorage();
-            if (cachedData) {
-                setAbsences(cachedData);
-                applyFilters(cachedData, searchQuery, filterPeriod);
-            }
-            setIsLoading(false);
-
-            toast.error('Erreur lors de la récupération des absences', err.message);
-
-            return false;
+            logger.error('absencesContext', 'loadFromStorage', 'Erreur lors du chargement', { error: err.message });
+            return null;
         }
-    }, [isAuthenticated, absences, isCacheValid, getAbsences, loadFromStorage, saveToStorage, searchQuery, filterPeriod]);
-
-    // Fonction pour rafraîchir les absences (pull-to-refresh)
-    const refreshAbsences = useCallback(async () => {
-        setIsRefreshing(true);
-        await fetchAbsences(true);
-        setIsRefreshing(false);
-    }, [fetchAbsences]);
+    }, [absences]);
 
     // Fonction pour vérifier si une date est dans la période spécifiée
     const isDateInPeriod = useCallback((dateISO, period) => {
@@ -287,7 +259,10 @@ export const AbsencesProvider = ({ children }) => {
 
     // Fonction pour appliquer les filtres (recherche et période)
     const applyFilters = useCallback((data, query, period) => {
-        if (!data || data.length === 0) return;
+        if (!data || data.length === 0) {
+            setFilteredAbsences([]);
+            return;
+        }
 
         const filtered = data.filter(absence => {
             // Filtre de recherche
@@ -311,17 +286,133 @@ export const AbsencesProvider = ({ children }) => {
         setFilteredAbsences(filtered);
     }, [isDateInPeriod, filteredAbsences.length]);
 
+    // Fonction pour charger les absences depuis l'API - optimisée avec debounce et meilleure gestion du cache
+    const fetchAbsences = useCallback(async (forceRefresh = false) => {
+        // Vérification d'authentification
+        if (!isAuthenticated) {
+            logger.warn('absencesContext', 'fetchAbsences', 'Non authentifié');
+            setError('Utilisateur non authentifié');
+            setIsLoading(false);
+            return false;
+        }
+
+        // Protection contre les appels multiples rapprochés
+        const now = Date.now();
+        if (!forceRefresh && fetchingRef.current) {
+            logger.debug('absencesContext', 'fetchAbsences', 'Appel ignoré - déjà en cours');
+            return false;
+        }
+
+        if (!forceRefresh && now - lastFetchTimeRef.current < DEBOUNCE_DELAY) {
+            logger.debug('absencesContext', 'fetchAbsences', 'Appel ignoré - trop rapproché');
+            return false;
+        }
+
+        // Utiliser le cache si valide et non-forcé
+        if (!forceRefresh && absences.length > 0 && isCacheValid()) {
+            return true;
+        }
+
+        // Essayer d'utiliser le cache stocké
+        if (!forceRefresh) {
+            const cachedData = await loadFromStorage();
+            if (cachedData && isCacheValid()) {
+                applyFilters(cachedData, searchQuery, filterPeriod);
+                setIsLoading(false);
+                return true;
+            }
+        }
+
+        // Marquer comme en cours de récupération
+        fetchingRef.current = true;
+        lastFetchTimeRef.current = now;
+
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            // Ne logguer que lorsqu'on fait réellement un appel API
+            logger.debug('absencesContext', 'fetchAbsences', `Rafraîchissement${forceRefresh ? ' forcé' : ''}`);
+
+            const { success, data, error } = await getAbsences();
+
+            if (success) {
+                // Vérifier si les données ont changé avant de mettre à jour l'état
+                const currentDataString = JSON.stringify(absences);
+                const newDataString = JSON.stringify(data);
+
+                if (currentDataString !== newDataString) {
+                    setAbsences(data);
+                    await saveToStorage(data);
+                    applyFilters(data, searchQuery, filterPeriod);
+                }
+
+                setIsLoading(false);
+                setHasChanges(false);
+                fetchingRef.current = false;
+                return true;
+            } else {
+                logger.error('absencesContext', 'fetchAbsences', 'Erreur API', { error });
+                toast.error(error.title || 'Absences erreur', 'Erreur lors du chargement des absences');
+
+                // Utiliser le cache en cas d'erreur
+                const cachedData = await loadFromStorage();
+                if (cachedData) {
+                    logger.info('absencesContext', 'fetchAbsences', 'Utilisation des données en cache après erreur');
+                    setAbsences(cachedData);
+                    applyFilters(cachedData, searchQuery, filterPeriod);
+                }
+
+                setIsLoading(false);
+                fetchingRef.current = false;
+                return false;
+            }
+        } catch (err) {
+            logger.error('absencesContext', 'fetchAbsences', 'Erreur non gérée', { error: err.message });
+
+            // Utiliser le cache même périmé en cas d'erreur
+            const cachedData = await loadFromStorage();
+            if (cachedData) {
+                setAbsences(cachedData);
+                applyFilters(cachedData, searchQuery, filterPeriod);
+            }
+
+            setIsLoading(false);
+            toast.error('Erreur lors de la récupération des absences', err.message);
+            fetchingRef.current = false;
+            return false;
+        }
+    }, [
+        isAuthenticated,
+        isCacheValid,
+        loadFromStorage,
+        saveToStorage,
+        applyFilters,
+        searchQuery,
+        filterPeriod,
+        getAbsences,
+        absences,
+        toast
+    ]);
+
+    // Fonction pour rafraîchir les absences (pull-to-refresh)
+    const refreshAbsences = useCallback(async () => {
+        setIsRefreshing(true);
+        await fetchAbsences(true);
+        setIsRefreshing(false);
+    }, [fetchAbsences]);
+
     // Appliquer les filtres lorsqu'ils changent
     useEffect(() => {
         applyFilters(absences, searchQuery, filterPeriod);
     }, [absences, searchQuery, filterPeriod, applyFilters]);
 
-    // Charger les absences au démarrage
+    // Charger les absences au démarrage - une seule fois à l'authentification
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && absences.length === 0) {
             fetchAbsences();
         }
-    }, [isAuthenticated, fetchAbsences]);
+    }, [isAuthenticated, fetchAbsences, absences.length]);
 
     // Fonction pour justifier une absence
     const submitJustification = useCallback(async (absenceId, justificationFile) => {
@@ -390,7 +481,7 @@ export const AbsencesProvider = ({ children }) => {
             setIsLoading(false);
             return false;
         }
-    }, [isAuthenticated, justifyAbsence, absences, saveToStorage, searchQuery, filterPeriod, applyFilters]);
+    }, [isAuthenticated, justifyAbsence, absences, saveToStorage, searchQuery, filterPeriod, applyFilters, toast]);
 
     // Fonction utilitaire pour calculer la durée totale des absences en heures
     const getTotalHours = useCallback((selectedAbsences) => {
@@ -406,26 +497,6 @@ export const AbsencesProvider = ({ children }) => {
 
         return parseFloat(totalHours.toFixed(1));
     }, []);
-
-    // Fonction utilitaire pour formater une date ISO
-    const formatDate = useCallback((isoDate) => {
-        if (!isoDate) return '';
-        const date = new Date(isoDate);
-        return format(date, 'dd/MM/yyyy', { locale: fr });
-    }, []);
-
-    // Fonction utilitaire pour formater l'heure depuis un ISO
-    const formatTime = useCallback((isoDate) => {
-        if (!isoDate) return '';
-        const date = new Date(isoDate);
-        return format(date, 'HH:mm', { locale: fr });
-    }, []);
-
-    // Fonction utilitaire pour créer une plage horaire depuis deux ISO
-    const formatTimeRange = useCallback((startISO, endISO) => {
-        if (!startISO || !endISO) return '';
-        return `${formatTime(startISO)} - ${formatTime(endISO)}`;
-    }, [formatTime]);
 
     // Fonction pour grouper les absences par semaine (pour la future visualisation)
     const getAbsencesByWeek = useCallback(() => {
@@ -518,33 +589,6 @@ export const AbsencesProvider = ({ children }) => {
         // Adapter chaque absence pour l'affichage
         return limitedAbsences.map(absence => adaptAbsenceForDisplay(absence));
     }, [absences, adaptAbsenceForDisplay]);
-
-    // Adapter une absence pour l'affichage
-    const adaptAbsenceForDisplay = useCallback((absence) => {
-        if (!absence) return null;
-
-        // Formatage de la date et de l'heure
-        const date = formatDate(absence.startTime);
-        const time = formatTimeRange(absence.startTime, absence.endTime);
-
-        // Formatage des enseignants (joindre avec des virgules si multiples)
-        const teacher = absence.teachers.join(', ');
-
-        // Formatage du statut
-        const status = absence.status.justified ? 'Justifiée' : 'Non justifiée';
-
-        // Adaptation pour l'affichage
-        return {
-            ...absence,
-            date,
-            time,
-            teacher,
-            room: absence.location,
-            status,
-            course: absence.courseName,
-            justificationDate: absence.status.justificationDate ? formatDate(absence.status.justificationDate) : null
-        };
-    }, [formatDate, formatTimeRange]);
 
     return (
         <AbsencesContext.Provider

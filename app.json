@@ -2,8 +2,7 @@
   "expo": {
     "name": "StudX",
     "slug": "studxv4",
-    "version": "0.1.3 Beta",
-    "buildId": "x8zpxPd4PzjTBf39pIg5",
+    "version": "0.1.4 Beta",
     "orientation": "portrait",
     "icon": "./assets/studx.png",
     "userInterfaceStyle": "automatic",
