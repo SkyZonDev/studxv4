@@ -8,6 +8,7 @@ import { useCalendar } from '../hooks/useCalendar'; // Importation du hook
 import { format } from 'date-fns';
 import ModernLoader from '../components/ModernLoader';
 import ScheduleModal from '../components/modal/ScheduleModal';
+import { DAYS, FULL_DAYS } from '../context/calendarContext';
 
 // Heures de cours possibles - Maintenant avec des demi-heures
 const HOURS = Array.from({ length: 48 }, (_, i) => {
@@ -16,13 +17,10 @@ const HOURS = Array.from({ length: 48 }, (_, i) => {
     return `${hours}:${minutes}`;
 });
 
-// Jours de la semaine
-const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
-
 // Fonction pour obtenir le jour suivant
 const getNextDay = (currentDay) => {
-    const currentIndex = DAYS.indexOf(currentDay);
-    return currentIndex < DAYS.length - 1 ? DAYS[currentIndex + 1] : null;
+    const currentIndex = FULL_DAYS.indexOf(currentDay);
+    return currentIndex < FULL_DAYS.length - 1 ? FULL_DAYS[currentIndex + 1] : null;
 };
 
 // Récupérer le jour et affiché le nom complet
@@ -274,9 +272,6 @@ const ScheduleScreen = () => {
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
             >
                 <View style={styles.headerContent}>
-                    {/* <TouchableOpacity style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-                    </TouchableOpacity> */}
                     <Text style={styles.headerTitle}>Emploi du temps</Text>
                     <View style={styles.headerButtons}>
                         {/* Bouton pour rafraîchir les données */}

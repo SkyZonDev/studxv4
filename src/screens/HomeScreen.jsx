@@ -208,17 +208,26 @@ const HomeScreen = () => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Indicateur de rafraîchissement */}
-                    {/* {renderCalendarStatus()} */}
-
                     {/* Modifié pour afficher les cours dès qu'ils sont disponibles */}
                     {isLoading && upcomingCourses.length === 0 ? (
-                        <View style={styles.courseItem}>
-                            <Text style={styles.loadingText}>Chargement des cours...</Text>
+                        <View style={styles.emptyStateCard}>
+                            <View style={styles.loadingContainer}>
+                                <View style={styles.loadingIconContainer}>
+                                    <Ionicons name="time-outline" size={32} color="#4A6FE1" />
+                                </View>
+                                <Text style={styles.loadingTitle}>Chargement en cours</Text>
+                                <Text style={styles.loadingSubtitle}>Récupération de votre emploi du temps...</Text>
+                            </View>
                         </View>
                     ) : upcomingCourses.length === 0 ? (
-                        <View style={styles.courseItem}>
-                            <Text style={styles.noCourseText}>Aucun cours à venir aujourd'hui</Text>
+                        <View style={styles.emptyStateCard}>
+                            <View style={styles.endDayContainer}>
+                                <View style={styles.endDayIconContainer}>
+                                    <Ionicons name="checkmark-circle-outline" size={38} color="#66BB6A" />
+                                </View>
+                                <Text style={styles.endDayTitle}>Journée terminée !</Text>
+                                <Text style={styles.endDaySubtitle}>Vous n'avez plus de cours prévus pour aujourd'hui</Text>
+                            </View>
                         </View>
                     ) : (
                         upcomingCourses.map(course => (
@@ -270,7 +279,7 @@ const HomeScreen = () => {
                     {recentGrades.length > 0 ? (
                         <FlatList
                             data={recentGrades}
-                            renderItem={GradesCard}
+                            renderItem={({ item }) => <GradesCard item={item} />}
                             keyExtractor={item => item.id.toString()}
                             contentContainerStyle={styles.gradesList}
                             // ListEmptyComponent={renderEmptyGrades}
@@ -445,6 +454,7 @@ const styles = StyleSheet.create({
     },
     courseItem: {
         flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: 12,
@@ -513,7 +523,7 @@ const styles = StyleSheet.create({
     infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#E8F9FB',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 6,
@@ -694,6 +704,66 @@ const styles = StyleSheet.create({
     emptyStateMessage: {
         fontSize: 14,
         color: '#666666',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    emptyStateCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        marginVertical: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        padding: 24,
+    },
+    loadingIconContainer: {
+        backgroundColor: '#4A6FE115',
+        borderRadius: 40,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    loadingTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2D3142',
+        marginBottom: 8,
+    },
+    loadingSubtitle: {
+        fontSize: 14,
+        color: '#757575',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    endDayContainer: {
+        alignItems: 'center',
+        padding: 24,
+    },
+    endDayIconContainer: {
+        backgroundColor: '#66BB6A15',
+        borderRadius: 40,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    endDayTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2D3142',
+        marginBottom: 8,
+    },
+    endDaySubtitle: {
+        fontSize: 14,
+        color: '#757575',
         textAlign: 'center',
         lineHeight: 20,
     },

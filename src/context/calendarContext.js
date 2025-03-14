@@ -14,8 +14,9 @@ const CURRENT_WEEK_KEY = 'calendar_current_week'; // Nouvelle clé pour les év�
 const LAST_UPDATED_KEY = 'calendar_last_updated';
 const CALENDAR_URL_KEY = 'secure_calendar_api_url';
 
-// Jours de la semaine pour l'affichage
-const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+// Jours de la semaine
+export const FULL_DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+export const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
 
 /**
  * Convertit une liste de noms séparés par '\; \n' en une liste séparée par virgules.
