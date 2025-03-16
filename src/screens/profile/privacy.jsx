@@ -264,14 +264,14 @@ const PrivacyPage = () => {
                             'Politique de confidentialité',
                             'Consultez notre politique de confidentialité',
                             '',
-                            handleNotImplemented
+                            () => navigation.navigate('Policy')
                         )}
                         {renderSettingItem(
                             'document',
                             'Conditions d\'utilisation',
                             'Consultez nos conditions d\'utilisation',
                             '',
-                            handleNotImplemented,
+                            () => navigation.navigate('Terms'),
                             true
                         )}
                     </View>

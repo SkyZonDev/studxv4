@@ -31,6 +31,8 @@ import SupportScreen from '../screens/profile/support';
 import PrivacyScreen from '../screens/profile/privacy';
 import LogsViewerPage from '../screens/profile/logs';
 import DeveloperModePage from '../screens/profile/DevelopperModePage';
+import TermsOfServiceScreen from '../screens/profile/TermsOfServiceScreen';
+import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
 
 
 // Create the navigators
@@ -38,6 +40,55 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
 const DevModeStack = createNativeStackNavigator();
+const PrivacyStack = createNativeStackNavigator();
+
+const PrivacyNavigator = () => {
+    const { colors } = useTheme();
+
+    return (
+        <PrivacyStack.Navigator
+            screenOptions={{
+                headerStyle: {
+                    backgroundColor: colors.background,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border || 'rgba(0,0,0,0.1)',
+                },
+                headerTintColor: colors.text.primary,
+                headerTitleStyle: {
+                    fontWeight: '600',
+                },
+                animation: 'slide_from_right',
+            }}
+        >
+            <PrivacyStack.Screen
+                name="PrivacyMain"
+                component={PrivacyScreen}
+                options={{
+                    headerShown: false,
+                    title: 'PrivacyMain'
+                }}
+            />
+            <PrivacyStack.Screen
+                name="Policy"
+                component={PrivacyPolicyScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Logs'
+                }}
+            />
+            <PrivacyStack.Screen
+                name="Terms"
+                component={TermsOfServiceScreen}
+                options={{
+                    headerShown: false,
+                    title: 'Logs'
+                }}
+            />
+        </PrivacyStack.Navigator>
+    );
+}
 
 const DevModeNavigator = () => {
     const { colors } = useTheme();
@@ -109,7 +160,7 @@ const ProfileNavigator = () => {
             />
             <ProfileStack.Screen
                 name="Privacy"
-                component={PrivacyScreen}
+                component={PrivacyNavigator}
                 options={{
                     headerShown: false,
                     title: 'Confidentialité'
