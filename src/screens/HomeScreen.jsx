@@ -14,7 +14,7 @@ import ScheduleModal from '../components/modal/ScheduleModal';
 import { useGrades } from '../context/gradesContext';
 import GradesCard from '../components/card/GradesCard';
 
-const SectionTitleWithRefresh = ({ title, isRefreshing }) => {
+const SectionTitleWithRefresh = ({ title, isRefreshing, styles }) => {
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -120,22 +120,402 @@ const HomeScreen = () => {
             .join(' ');
     };
 
-
-    const toggleCourseDetails = (course) => {
-        if (selectedCourse && selectedCourse.id === course.id) {
-            setShowCourseDetails(false);
-            setSelectedCourse(null);
-        } else {
-            // Afficher les détails du nouveau cours sélectionné
-            setSelectedCourse(course);
-            setShowCourseDetails(true);
-        }
-    };
-
     // Fonction de navigation cohérente
     const navigateTo = (screen) => {
         navigation.navigate(screen);
     };
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingTop: 15,
+            paddingBottom: 25,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        greetingText: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: '#E0E8FF',
+        },
+        nameText: {
+            fontSize: 22,
+            fontWeight: 'bold',
+            color: colors.primary.contrast,
+            marginTop: 4,
+        },
+        profileButton: {
+            width: 45,
+            height: 45,
+            borderWidth: 3,
+            borderColor: colors.primary.contrast,
+            borderRadius: 22.5,
+            justifyContent: 'center',
+            alignItems: 'center',
+            // elevation: 3,
+        },
+        profileImage: {
+            width: 41,
+            height: 41,
+            borderRadius: 20.5,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 20,
+        },
+        section: {
+            marginTop: 20,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        sectionTitleContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            letterSpacing: 0.3,
+            textShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
+        },
+        seeAllText: {
+            fontSize: 14,
+            color: colors.primary.main,
+            fontWeight: '500',
+        },
+        quickAccessGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            marginTop: 10,
+        },
+        card: {
+            width: (SCREEN.width - 50) / 2,
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 10,
+            marginBottom: 10,
+            elevation: 2,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderLeftWidth: 4,
+        },
+        cardContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        iconContainer: {
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 10,
+        },
+        cardTitle: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text.primary,
+        },
+        courseItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 12,
+            marginBottom: 12,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        currentCourseItem: {
+            borderLeftWidth: 4,
+            borderLeftColor: colors.primary.main,
+            backgroundColor: colors.primary.background,
+            transform: [{ scale: 1.02 }],
+        },
+        courseTimeContainer: {
+            width: 65,
+            height: 65,
+            backgroundColor: colors.primary.lighter,
+            borderRadius: 12,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 14,
+        },
+        courseTime: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.primary.main,
+        },
+        courseDetails: {
+            flex: 1,
+            justifyContent: 'center',
+        },
+        courseHeaderRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        courseName: {
+            fontSize: 15,
+            fontWeight: '600',
+            color: colors.text.primary,
+            flex: 1,
+        },
+        currentBadge: {
+            backgroundColor: colors.primary.main,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 8,
+            marginLeft: 8,
+            borderWidth: 1,
+            borderColor: colors.primary.main,
+        },
+        currentBadgeText: {
+            fontSize: 12,
+            fontWeight: '600',
+            color: colors.primary.contrast,
+        },
+        courseInfo: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+        },
+        infoItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.course.currentBadge.border,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 6,
+            borderCurve: "continuous",
+            maxWidth: "52%"
+        },
+        infoText: {
+            fontSize: 12,
+            color: colors.course.info.text,
+            marginLeft: 4,
+            fontWeight: '500'
+        },
+        loadingText: {
+            fontSize: 14,
+            fontStyle: 'italic',
+            color: colors.text.tertiary,
+            textAlign: 'center',
+            flex: 1,
+            padding: 10,
+        },
+        noCourseText: {
+            fontSize: 14,
+            fontStyle: 'italic',
+            color: colors.text.tertiary,
+            textAlign: 'center',
+            flex: 1,
+            padding: 10,
+        },
+        // Nouveaux styles pour l'indicateur de rafraîchissement
+        refreshingContainer: {
+            backgroundColor: '#F0F8FF',
+            borderRadius: 12,
+            padding: 8,
+            marginBottom: 12,
+        },
+        refreshingContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+        },
+        refreshingText: {
+            fontSize: 13,
+            color: colors.primary.main,
+            fontWeight: '500',
+        },
+
+
+        absenceItem: {
+            flexDirection: 'row',
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 10,
+            elevation: 1,
+            alignItems: 'center',
+        },
+        absenceStatus: {
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            marginRight: 14,
+        },
+        statusText: {
+            fontSize: 12,
+            fontWeight: '600',
+        },
+        absenceDetails: {
+            flex: 1,
+        },
+        absenceCourse: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.text.primary,
+            marginBottom: 4,
+        },
+        absenceDate: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+        },
+
+        // Style carte Notes
+        noGradecontainer: {
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 24,
+            marginVertical: 12,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 2,
+        },
+        noGradeIconContainer: {
+            backgroundColor: '#f1f3f8',
+            borderRadius: 50,
+            width: 80,
+            height: 80,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        noGradeTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#3d405b',
+            marginBottom: 8,
+        },
+        noGradeSubtitle: {
+            fontSize: 14,
+            color: '#8e9aaf',
+            textAlign: 'center',
+            lineHeight: 20,
+        },
+
+        // Styles carte Absenses
+        emptyCard: {
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            padding: 24,
+            marginVertical: 12,
+            alignItems: 'center',
+            shadowColor: colors.card.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 2,
+        },
+        emptyStateContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+        },
+        emptyStateIcon: {
+            fontSize: 36,
+            color: '#4CAF50',
+            marginBottom: 12,
+        },
+        emptyStateTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#333333',
+            marginBottom: 8,
+        },
+        emptyStateMessage: {
+            fontSize: 14,
+            color: colors.text.secondary,
+            textAlign: 'center',
+            lineHeight: 20,
+        },
+        emptyStateCard: {
+            backgroundColor: colors.surface,
+            borderRadius: 16,
+            marginVertical: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 2,
+        },
+        loadingContainer: {
+            alignItems: 'center',
+            padding: 24,
+        },
+        loadingIconContainer: {
+            backgroundColor: '#4A6FE115',
+            borderRadius: 40,
+            width: 60,
+            height: 60,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        loadingTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#2D3142',
+            marginBottom: 8,
+        },
+        loadingSubtitle: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+            lineHeight: 20,
+        },
+        endDayContainer: {
+            alignItems: 'center',
+            padding: 24,
+        },
+        endDayIconContainer: {
+            backgroundColor: colors.success.light,
+            borderRadius: 40,
+            width: 60,
+            height: 60,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        endDayTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: colors.text.primary,
+            marginBottom: 8,
+        },
+        endDaySubtitle: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+            lineHeight: 20,
+        },
+    });
 
     const renderCard = (title, icon, color, screen) => (
         <TouchableOpacity
@@ -152,13 +532,24 @@ const HomeScreen = () => {
         </TouchableOpacity>
     );
 
+    const toggleCourseDetails = (course) => {
+        if (selectedCourse && selectedCourse.id === course.id) {
+            setShowCourseDetails(false);
+            setSelectedCourse(null);
+        } else {
+            // Afficher les détails du nouveau cours sélectionné
+            setSelectedCourse(course);
+            setShowCourseDetails(true);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
             {/* Header with Gradient */}
             <LinearGradient
-                colors={['#4A6FE1', '#6C92F4']}
+                colors={[colors.gradients.primary[0], colors.gradients.primary[1]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
@@ -179,7 +570,7 @@ const HomeScreen = () => {
                                 <Text style={{
                                     fontSize: 16,
                                     fontWeight: 700,
-                                    color: colors.text.inverse
+                                    color: colors.primary.contrast
                                 }}>{userData.firstname[0]}{userData.lastname[0]}</Text>
                             </View>
                         )}
@@ -202,7 +593,7 @@ const HomeScreen = () => {
                 {/* Upcoming Classes */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <SectionTitleWithRefresh title="Prochains cours" isRefreshing={isRefreshing} />
+                        <SectionTitleWithRefresh title="Prochains cours" isRefreshing={isRefreshing} styles={styles} />
                         <TouchableOpacity onPress={() => navigateTo('schedule')}>
                             <Text style={styles.seeAllText}>Voir tout</Text>
                         </TouchableOpacity>
@@ -258,7 +649,7 @@ const HomeScreen = () => {
                                         </View>
                                         <View style={styles.infoItem}>
                                             <Ionicons name="person" size={14} color="#757575" />
-                                            <Text style={styles.infoText}>{course.teacher}</Text>
+                                            <Text style={styles.infoText} numberOfLines={1} ellipsizeMode='tail' adjustsFontSizeToFit>{course.teacher}</Text>
                                         </View>
                                     </View>
                                 </View>
@@ -279,7 +670,7 @@ const HomeScreen = () => {
                     {recentGrades.length > 0 ? (
                         <FlatList
                             data={recentGrades}
-                            renderItem={({ item }) => <GradesCard item={item} />}
+                            renderItem={({ item }) => <GradesCard item={item} colors={colors} />}
                             keyExtractor={item => item.id.toString()}
                             contentContainerStyle={styles.gradesList}
                             // ListEmptyComponent={renderEmptyGrades}
@@ -345,428 +736,5 @@ const HomeScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 25,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    greetingText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#E0E8FF',
-    },
-    nameText: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        marginTop: 4,
-    },
-    profileButton: {
-        width: 45,
-        height: 45,
-        borderWidth: 3,
-        borderColor: "#FFFFFF",
-        borderRadius: 22.5,
-        justifyContent: 'center',
-        alignItems: 'center',
-        // elevation: 3,
-    },
-    profileImage: {
-        width: 41,
-        height: 41,
-        borderRadius: 20.5,
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-    },
-    section: {
-        marginTop: 20,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    sectionTitleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        letterSpacing: 0.3,
-        textShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
-    },
-    seeAllText: {
-        fontSize: 14,
-        color: '#4A6FE1',
-        fontWeight: '500',
-    },
-    quickAccessGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginTop: 10,
-    },
-    card: {
-        width: (SCREEN.width - 50) / 2,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 10,
-        marginBottom: 10,
-        elevation: 2,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderLeftWidth: 4,
-    },
-    cardContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    iconContainer: {
-        width: 34,
-        height: 34,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    cardTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333',
-    },
-    courseItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 12,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    currentCourseItem: {
-        borderLeftWidth: 4,
-        borderLeftColor: '#4A6FE1',
-        backgroundColor: '#F5F9FF',
-        transform: [{ scale: 1.02 }],
-    },
-    courseTimeContainer: {
-        width: 65,
-        height: 65,
-        backgroundColor: '#F0F4FF',
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 14,
-    },
-    courseTime: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#4A6FE1',
-    },
-    courseDetails: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    courseHeaderRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    courseName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#2D3142',
-        flex: 1,
-    },
-    currentBadge: {
-        backgroundColor: '#4A6FE110',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-        marginLeft: 8,
-        borderWidth: 1,
-        borderColor: '#4A6FE130',
-    },
-    currentBadgeText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#4A6FE1',
-    },
-    courseInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    infoItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#E8F9FB',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-    },
-    infoText: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 4,
-        fontWeight: '500',
-    },
-    loadingText: {
-        fontSize: 14,
-        fontStyle: 'italic',
-        color: '#757575',
-        textAlign: 'center',
-        flex: 1,
-        padding: 10,
-    },
-    noCourseText: {
-        fontSize: 14,
-        fontStyle: 'italic',
-        color: '#757575',
-        textAlign: 'center',
-        flex: 1,
-        padding: 10,
-    },
-    // Nouveaux styles pour l'indicateur de rafraîchissement
-    refreshingContainer: {
-        backgroundColor: '#F0F8FF',
-        borderRadius: 12,
-        padding: 8,
-        marginBottom: 12,
-    },
-    refreshingContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    refreshingText: {
-        fontSize: 13,
-        color: '#4A6FE1',
-        fontWeight: '500',
-    },
-    gradeItem: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 10,
-        elevation: 1,
-        alignItems: 'center',
-    },
-    gradeCircle: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        backgroundColor: '#FF8A6520',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 14,
-    },
-    gradeText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#FF8A65',
-    },
-    gradeDetails: {
-        flex: 1,
-    },
-    gradeCourse: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-    },
-    gradeDate: {
-        fontSize: 12,
-        color: '#757575',
-    },
-    absenceItem: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 10,
-        elevation: 1,
-        alignItems: 'center',
-    },
-    absenceStatus: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        marginRight: 14,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    absenceDetails: {
-        flex: 1,
-    },
-    absenceCourse: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
-    },
-    absenceDate: {
-        fontSize: 12,
-        color: '#757575',
-    },
-
-    // Style carte Notes
-    noGradecontainer: {
-        backgroundColor: '#ffffff',
-        borderRadius: 16,
-        padding: 24,
-        marginVertical: 12,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    noGradeIconContainer: {
-        backgroundColor: '#f1f3f8',
-        borderRadius: 50,
-        width: 80,
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    noGradeTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#3d405b',
-        marginBottom: 8,
-    },
-    noGradeSubtitle: {
-        fontSize: 14,
-        color: '#8e9aaf',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-
-    // Styles carte Absenses
-    emptyCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 16,
-        padding: 24,
-        marginVertical: 12,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    emptyStateContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-    },
-    emptyStateIcon: {
-        fontSize: 36,
-        color: '#4CAF50',
-        marginBottom: 12,
-    },
-    emptyStateTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333333',
-        marginBottom: 8,
-    },
-    emptyStateMessage: {
-        fontSize: 14,
-        color: '#666666',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-    emptyStateCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        marginVertical: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    loadingContainer: {
-        alignItems: 'center',
-        padding: 24,
-    },
-    loadingIconContainer: {
-        backgroundColor: '#4A6FE115',
-        borderRadius: 40,
-        width: 60,
-        height: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    loadingTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#2D3142',
-        marginBottom: 8,
-    },
-    loadingSubtitle: {
-        fontSize: 14,
-        color: '#757575',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-    endDayContainer: {
-        alignItems: 'center',
-        padding: 24,
-    },
-    endDayIconContainer: {
-        backgroundColor: '#66BB6A15',
-        borderRadius: 40,
-        width: 60,
-        height: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    endDayTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#2D3142',
-        marginBottom: 8,
-    },
-    endDaySubtitle: {
-        fontSize: 14,
-        color: '#757575',
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-});
 
 export default HomeScreen;

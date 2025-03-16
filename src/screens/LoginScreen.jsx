@@ -24,10 +24,12 @@ import { useUser } from '../hooks/useUser';
 import useToast from '../hooks/useToast';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/themeContext';
 
 const LoginScreen = () => {
     const toast = useToast();
     const navigation = useNavigation();
+    const { colors } = useTheme();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

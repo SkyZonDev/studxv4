@@ -18,7 +18,7 @@ const ProfileScreen = () => {
     const { userData, logout } = useUser();
     const { preferences } = usePreferences();
     const toast = useToast();
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors, isDarkMode, darkMode, toggleTheme } = useTheme();
     const insets = useSafeAreaInsets();
     const version = Constants.expoConfig?.version || 'non disponible';
 
@@ -468,13 +468,13 @@ const ProfileScreen = () => {
                             'moon',
                             'Apparence',
                             preferences.appearance,
-                            () => { }, // toggleTheme,
+                            toggleTheme,
                             false,
                             <Switch
-                                value={darkMode}
-                                onValueChange={() => { }} // toggleTheme
+                                value={isDarkMode, isDarkMode}
+                                onValueChange={toggleTheme} // toggleTheme
                                 trackColor={{ false: '#E0E0E0', true: '#4A6FE180' }}
-                                thumbColor={darkMode ? '#4A6FE1' : '#F5F5F5'}
+                                thumbColor={isDarkMode ? '#4A6FE1' : '#F5F5F5'}
                             />
                         )}
                         {renderSettingItem('language', 'Langue', preferences.language, handleNotImplemented)}

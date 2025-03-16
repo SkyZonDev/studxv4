@@ -38,7 +38,7 @@ const TabBar = ({ state, descriptors, navigation }) => {
             borderTopRightRadius: 20,
             backgroundColor: colors.background,
             borderWidth: 1,
-            borderColor: colors.card.shadow || 'rgba(0,0,0,0.05)',
+            borderColor: colors.card.border || 'rgba(0,0,0,0.05)',
         },
         tabItem: {
             flex: 1,
