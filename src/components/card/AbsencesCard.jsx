@@ -7,7 +7,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const AbsencesCard = ({ absence, openAbsenceDetail, setSelectedAbsence, setShowJustifyModal }) => {
+const AbsencesCard = ({ absence, openAbsenceDetail, setSelectedAbsence, setShowJustifyModal, colors }) => {
     const [expanded, setExpanded] = useState(false);
     const [absenceActive, setAbsenceActive] = useState(false)
     const rotationAnimation = useRef(new Animated.Value(0)).current;
@@ -40,6 +40,105 @@ const AbsencesCard = ({ absence, openAbsenceDetail, setSelectedAbsence, setShowJ
     // Pré-calculer les styles conditionnels
     const statusBackgroundColor = absence.status === 'Justifiée' ? '#66BB6A20' : '#FF8A6520';
     const statusTextColor = absence.status === 'Justifiée' ? '#66BB6A' : '#FF8A65';
+
+    const styles = StyleSheet.create({
+        absenceItem: {
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            marginBottom: 15,
+            elevation: 2,
+            overflow: 'hidden',
+        },
+        mainContent: {
+            padding: 15,
+        },
+        absenceHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        absenceDate: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        absenceDateText: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            marginLeft: 5,
+        },
+        absenceStatus: {
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+        },
+        statusText: {
+            fontSize: 12,
+            fontWeight: '600',
+        },
+        titleRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        absenceCourse: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            flex: 1,
+        },
+        collapsibleContent: {
+            paddingHorizontal: 15,
+            paddingBottom: 5,
+        },
+        absenceDetails: {
+            marginBottom: 15,
+        },
+        infoItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 15,
+            marginBottom: 10,
+            maxWidth: '90%'
+        },
+        infoText: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            marginLeft: 5,
+            flexShrink: 1,
+        },
+        buttonContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        justifyButton: {
+            backgroundColor: colors.info.border,
+            borderRadius: 8,
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            alignSelf: 'flex-start',
+            marginBottom: 10,
+        },
+        justifyButtonText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.primary.main,
+        },
+        justificationText: {
+            fontSize: 14,
+            color: colors.success.main,
+            fontStyle: 'italic',
+            marginBottom: 10,
+        },
+        transparentButton: {
+            backgroundColor: 'transparent',
+        },
+        detailButtonText: {
+            fontSize: 14,
+            color: colors.primary.main,
+            fontWeight: '500',
+        },
+    });
 
     return (
         <View style={styles.absenceItem}>
@@ -116,105 +215,6 @@ const AbsencesCard = ({ absence, openAbsenceDetail, setSelectedAbsence, setShowJ
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    absenceItem: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        marginBottom: 15,
-        elevation: 2,
-        overflow: 'hidden',
-    },
-    mainContent: {
-        padding: 15,
-    },
-    absenceHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    absenceDate: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    absenceDateText: {
-        fontSize: 14,
-        color: '#757575',
-        marginLeft: 5,
-    },
-    absenceStatus: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    titleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    absenceCourse: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-        flex: 1,
-    },
-    collapsibleContent: {
-        paddingHorizontal: 15,
-        paddingBottom: 5,
-    },
-    absenceDetails: {
-        marginBottom: 15,
-    },
-    infoItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginRight: 15,
-        marginBottom: 10,
-        maxWidth: '90%'
-    },
-    infoText: {
-        fontSize: 14,
-        color: '#757575',
-        marginLeft: 5,
-        flexShrink: 1,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    justifyButton: {
-        backgroundColor: '#4A6FE120',
-        borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        alignSelf: 'flex-start',
-        marginBottom: 10,
-    },
-    justifyButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#4A6FE1',
-    },
-    justificationText: {
-        fontSize: 14,
-        color: '#66BB6A',
-        fontStyle: 'italic',
-        marginBottom: 10,
-    },
-    transparentButton: {
-        backgroundColor: 'transparent',
-    },
-    detailButtonText: {
-        fontSize: 14,
-        color: '#4A6FE1',
-        fontWeight: '500',
-    },
-});
 
 // Vous pouvez utiliser React.memo ici si vous voulez toujours optimiser les re-rendus
 // const MemoizedAbsencesCard = React.memo(AbsencesCard);

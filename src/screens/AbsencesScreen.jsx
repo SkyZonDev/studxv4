@@ -90,13 +90,145 @@ const AbsencesScreen = () => {
         });
     }
 
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingTop: 15,
+            paddingBottom: 25,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        headerButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginLeft: 10
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: colors.primary.contrast,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 20,
+            paddingTop: 20,
+        },
+        searchContainer: {
+            flexDirection: 'row',
+            marginBottom: 20,
+        },
+        searchBar: {
+            flex: 1,
+            height: 50,
+            backgroundColor: colors.surface,
+            borderRadius: 10,
+            paddingHorizontal: 15,
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 10,
+            elevation: 2,
+        },
+        searchInput: {
+            flex: 1,
+            height: 50,
+            marginLeft: 10,
+            fontSize: 16,
+        },
+        filterButton: {
+            width: 50,
+            height: 50,
+            backgroundColor: colors.surface,
+            borderRadius: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 2,
+        },
+        statsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+        },
+        statCard: {
+            width: '31%',
+            borderRadius: 10,
+            padding: 10,
+            alignItems: 'center',
+        },
+        statNumber: {
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: colors.primary.main,
+            marginBottom: 5,
+        },
+        statLabel: {
+            fontSize: 12,
+            color: colors.primary.main,
+        },
+        periodContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        periodLabel: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginRight: 10,
+        },
+        periodValue: {
+            fontSize: 16,
+            color: colors.primary.main,
+            fontWeight: '500',
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginBottom: 15,
+        },
+        absencesList: {
+            flex: 1,
+        },
+        emptyState: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 50,
+        },
+        emptyStateTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginTop: 20,
+            marginBottom: 10,
+        },
+        emptyStateText: {
+            fontSize: 16,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+            maxWidth: '80%',
+        },
+    });
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
             {/* Header with Gradient */}
             <LinearGradient
-                colors={['#4A6FE1', '#6C92F4']}
+                colors={[colors.gradients.primary[0], colors.gradients.primary[1]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
@@ -107,10 +239,10 @@ const AbsencesScreen = () => {
                         flexDirection: 'row'
                     }}>
                         <TouchableOpacity style={styles.headerButton} onPress={() => handleSearch()}>
-                            <Ionicons name="search" size={24} color="#FFFFFF" />
+                            <Ionicons name="search" size={24} color={colors.primary.contrast} />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.headerButton} onPress={() => setShowFilterModal(true)}>
-                            <Ionicons name="funnel" size={20} color="#FFFFFF" />
+                            <Ionicons name="funnel" size={20} color={colors.primary.contrast} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -157,6 +289,7 @@ const AbsencesScreen = () => {
                         {filterPeriod === FILTER_PERIODS.MONTH ? ' ce mois' : ''}
                     </Text>
                     <Text style={{
+                        color: colors.primary.main,
                         marginLeft: 10,
                         marginBottom: 14,
                         fontStyle: 'italic'
@@ -170,7 +303,7 @@ const AbsencesScreen = () => {
                         <RefreshControl
                             refreshing={isRefreshing}
                             onRefresh={refreshAbsences}
-                            colors={['#4A6FE1']}
+                            colors={[colors.primary.main]}
                         />
                     }
                 >
@@ -186,6 +319,7 @@ const AbsencesScreen = () => {
                                 openAbsenceDetail={() => openAbsenceDetail(absence)}
                                 setSelectedAbsence={() => setSelectedAbsence(adaptAbsenceForDisplay(absence))}
                                 setShowJustifyModal={setShowJustifyModal}
+                                colors={colors}
                             />
                         ))
                     ) : (
@@ -207,6 +341,7 @@ const AbsencesScreen = () => {
                 showFilterModal={showFilterModal}
                 setShowFilterModal={setShowFilterModal}
                 selectPeriod={selectPeriod}
+                colors={colors}
             />
 
             {/* Absence Detail Modal */}
@@ -215,6 +350,7 @@ const AbsencesScreen = () => {
                 showJustifyModal={showJustifyModal}
                 setShowJustifyModal={setShowJustifyModal}
                 closeAbsenceDetail={closeAbsenceDetail}
+                colors={colors}
             />
 
             {/* Justify Modal */}
@@ -225,141 +361,10 @@ const AbsencesScreen = () => {
                 setShowJustifyModal={setShowJustifyModal}
                 justifyAbsence={justifyAbsence}
                 closeAbsenceDetail={closeAbsenceDetail}
+                colors={colors}
             />
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 25,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    headerButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 10
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        marginBottom: 20,
-    },
-    searchBar: {
-        flex: 1,
-        height: 50,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginRight: 10,
-        elevation: 2,
-    },
-    searchInput: {
-        flex: 1,
-        height: 50,
-        marginLeft: 10,
-        fontSize: 16,
-    },
-    filterButton: {
-        width: 50,
-        height: 50,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 2,
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-    },
-    statCard: {
-        width: '31%',
-        borderRadius: 10,
-        padding: 10,
-        alignItems: 'center',
-    },
-    statNumber: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#4A6FE1',
-        marginBottom: 5,
-    },
-    statLabel: {
-        fontSize: 12,
-        color: '#4A6FE1',
-    },
-    periodContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    periodLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-        marginRight: 10,
-    },
-    periodValue: {
-        fontSize: 16,
-        color: '#4A6FE1',
-        fontWeight: '500',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 15,
-    },
-    absencesList: {
-        flex: 1,
-    },
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 50,
-    },
-    emptyStateTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginTop: 20,
-        marginBottom: 10,
-    },
-    emptyStateText: {
-        fontSize: 16,
-        color: '#757575',
-        textAlign: 'center',
-        maxWidth: '80%',
-    },
-});
 
 export default AbsencesScreen;
