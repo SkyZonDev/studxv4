@@ -58,7 +58,9 @@ const LoginScreen = () => {
         loading,
         logout,
         needsPasswordOnly,
-        storedUsername
+        storedUsername,
+        authenticateWithBiometrics,
+        loginWithStoredCredentials
     } = useUser();
 
     // Pré-remplir l'email s'il est stocké
@@ -223,6 +225,31 @@ const LoginScreen = () => {
         navigation.navigate('Logs')
     }
 
+    const handleBiometricsLogin = async () => {
+        try {
+            // Tentative d'authentification biométrique
+            const result = await authenticateWithBiometrics();
+
+            if (result.success) {
+                // Si l'authentification biométrique réussit, on tente de se connecter avec les identifiants stockés
+                await loginWithStoredCredentials();
+            } else {
+                // Si l'authentification biométrique échoue, on affiche un message
+                toast.info(
+                    'Authentification annulée',
+                    'Veuillez réessayer ou utilisez votre mot de passe'
+                );
+            }
+        } catch (error) {
+            // En cas d'erreur inattendue
+            toast.error(
+                'Erreur',
+                'Une erreur est survenue lors de l\'authentification biométrique'
+            );
+            console.error('Erreur biométrique:', error);
+        }
+    };
+
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -248,7 +275,7 @@ const LoginScreen = () => {
         logoText: {
             fontSize: 36,
             fontWeight: 'bold',
-            color: colors.text.primary,
+            color: colors.primary.contrast,
             marginTop: 12,
             textShadowColor: 'rgba(0, 0, 0, 0.2)',
             textShadowOffset: { width: 1, height: 1 },
@@ -370,6 +397,19 @@ const LoginScreen = () => {
         },
         loginButtonText: {
             color: colors.primary.contrast,
+            fontSize: 18,
+            fontWeight: '600',
+        },
+        biometricsLoginButton: {
+            borderWidth: 2,
+            borderColor: colors.primary.main,
+            borderRadius: 14,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        biometricsLoginButtonText: {
+            color: colors.primary.main,
             fontSize: 18,
             fontWeight: '600',
         },
@@ -564,6 +604,19 @@ const LoginScreen = () => {
                                         <ActivityIndicator color="white" />
                                     ) : (
                                         <Text style={styles.loginButtonText}>Se connecter</Text>
+                                    )}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.biometricsLoginButton]}
+                                    onPress={handleBiometricsLogin}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator color="white" />
+                                    ) : (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                                            <Ionicons name='finger-print' size={24} color={colors.primary.main} />
+                                            <Text style={styles.biometricsLoginButtonText}>Utiliser la biometrie</Text>
+                                        </View>
                                     )}
                                 </TouchableOpacity>
 

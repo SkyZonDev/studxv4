@@ -150,11 +150,8 @@ export const UserProvider = ({ children }) => {
                         const biometricAuth = await authenticateWithBiometrics();
 
                         if (biometricAuth.success) {
-                            // Authentification biométrique réussie, récupérer le mot de passe et connecter
-                            const password = await SecureStore.getItemAsync(STORAGE_KEYS.PASSWORD);
-                            if (password) {
-                                await loginWithStoredCredentials(username, password);
-                            }
+                            // Authentification biométrique réussie, utiliser loginWithStoredCredentials
+                            await loginWithStoredCredentials();
                         } else {
                             // Authentification biométrique échouée, demander le mot de passe
                             setNeedsPasswordOnly(true);
@@ -201,51 +198,44 @@ export const UserProvider = ({ children }) => {
     };
 
     /**
-     * @description Connexion avec les identifiants stockés après authentification biométrique
-     */
-    const loginWithStoredCredentials = async (username, password) => {
+ * @description Connexion avec les identifiants stockés après authentification biométrique
+ * Récupère automatiquement les identifiants depuis SecureStore et utilise la fonction login
+ * @returns {Promise<{success: boolean, error?: string}>} Résultat de la tentative de connexion
+ */
+    const loginWithStoredCredentials = async () => {
         try {
-            logger.debug('userContext.js', 'loginWithStoredCredentials', 'Tentative de connexion avec identifiants stockés', { username });
+            logger.debug('userContext.js', 'loginWithStoredCredentials', 'Tentative de récupération des identifiants stockés');
 
             if (needReload) {
                 logger.info('userContext.js', 'loginWithStoredCredentials', 'Redémarrage requis, connexion impossible');
                 return toast.info('Redémarrage demandé', 'Veuillez fermer et redémarrer l\'application');
             }
 
-            const apiResponse = await userService.login(username, password);
-            const result = ApiClient.handleApiResponse(apiResponse);
+            // Récupérer les identifiants stockés
+            const username = await SecureStore.getItemAsync(STORAGE_KEYS.USERNAME);
+            const password = await SecureStore.getItemAsync(STORAGE_KEYS.PASSWORD);
 
-            if (result.success) {
-                logger.info('userContext.js', 'loginWithStoredCredentials', 'Connexion réussie avec identifiants stockés', { username });
-
-                setUserData(result.data.userData);
-                setUserCookies(result.data.cookies);
-                setUserRoutes(result.data.routes);
-                setIsAuthenticated(true);
-
-                toast.success({
-                    title: result.title,
-                    duration: 3000,
-                    position: toast.positions.TOP
-                });
-            } else {
-                logger.warn('userContext.js', 'loginWithStoredCredentials', 'Échec de connexion avec identifiants stockés', {
-                    title: result.title,
-                    detail: result.detail
-                });
-
-                toast.error({
-                    title: result.title,
-                    description: result.detail
-                });
+            if (!username || !password) {
+                logger.warn('userContext.js', 'loginWithStoredCredentials', 'Aucun identifiant stocké trouvé');
+                return {
+                    success: false,
+                    error: 'Identifiants non trouvés'
+                };
             }
+
+            logger.info('userContext.js', 'loginWithStoredCredentials', 'Identifiants récupérés, tentative de connexion', { username });
+
+            // Appeler la fonction login avec les identifiants récupérés
+            // true pour rememberMe car on a déjà les identifiants stockés
+            return await login(username, password, true);
         } catch (err) {
-            logger.error('userContext.js', 'loginWithStoredCredentials', 'Erreur critique de connexion', err);
-            console.error('Erreur de connexion avec identifiants stockés', err);
+            logger.error('userContext.js', 'loginWithStoredCredentials', 'Erreur lors de la récupération des identifiants', err);
+            console.error('Erreur lors de la récupération des identifiants stockés:', err);
             toast.error({
-                title: 'Erreur de connexion avec identifiants stockés',
+                title: 'Erreur de connexion',
                 description: err.message
             });
+            return { success: false, error: err.message };
         }
     };
 
@@ -784,6 +774,7 @@ export const UserProvider = ({ children }) => {
         getGrades,
         getUpdate,
         getUniqueID,
+        loginWithStoredCredentials,
 
         removeAllData
     };
