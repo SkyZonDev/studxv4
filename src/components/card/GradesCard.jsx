@@ -2,6 +2,18 @@ import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 
 
 const GradesCard = ({ item, colors }) => {
+    function formatGrade(grade) {
+        const [value] = grade.split('/');
+        const numValue = Number(value);
+
+        // Vérifie si le nombre est un entier
+        if (Number.isInteger(numValue)) {
+            return numValue.toString(); // Retourne l'entier tel quel
+        } else {
+            // Si ce n'est pas un entier, arrondit à 2 décimales
+            return parseFloat(numValue).toFixed(1);
+        }
+    }
     const styles = StyleSheet.create({
         gradeItem: {
             backgroundColor: colors.surface,
@@ -62,7 +74,7 @@ const GradesCard = ({ item, colors }) => {
         gradeStats: {
             flexDirection: 'row',
             padding: 10,
-            backgroundColor: colors.border,
+            backgroundColor: colors.primary.background,
         },
         statItem: {
             flex: 1,
@@ -110,7 +122,7 @@ const GradesCard = ({ item, colors }) => {
                                 parseFloat(item.grade) >= 15 ? '#66BB6A' :
                                     parseFloat(item.grade) >= 10 ? '#4A6FE1' : '#FF8A65'
                         }
-                    ]}>{item.grade.split('/')[0]}</Text>
+                    ]}>{formatGrade(item.grade)}</Text>
                 </View>
                 <View style={styles.gradeDetails}>
                     <Text style={styles.gradeCourse}>{item.course}</Text>
@@ -144,6 +156,5 @@ const GradesCard = ({ item, colors }) => {
         </TouchableOpacity>
     )
 }
-
 
 module.exports = GradesCard;

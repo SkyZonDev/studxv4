@@ -18,7 +18,7 @@ const ProfileScreen = () => {
     const { userData, logout } = useUser();
     const { preferences } = usePreferences();
     const toast = useToast();
-    const { colors, isDarkMode, darkMode, toggleTheme } = useTheme();
+    const { colors, isDarkMode, toggleTheme } = useTheme();
     const insets = useSafeAreaInsets();
     const version = Constants.expoConfig?.version || 'non disponible';
 
