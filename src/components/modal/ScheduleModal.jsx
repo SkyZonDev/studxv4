@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, PanResponder, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ScheduleModal = ({ selectedCourse, detailsAnimation, toggleCourseDetails, visible = false }) => {
+const ScheduleModal = ({ selectedCourse, colors, toggleCourseDetails, visible = false }) => {
     // Référence pour l'animation de glissement
     const panY = useRef(new Animated.Value(0)).current;
 
@@ -56,6 +56,120 @@ const ScheduleModal = ({ selectedCourse, detailsAnimation, toggleCourseDetails, 
     // S'assurer que selectedCourse existe avant de l'utiliser
     if (!selectedCourse) return null;
 
+    const DetailItem = ({ icon, label, value }) => (
+        <View style={styles.detailsItem}>
+            <View style={styles.iconContainer}>
+                <Ionicons name={icon} size={22} color={colors.primary.main} />
+            </View>
+            <View style={styles.detailTextContainer}>
+                <Text style={styles.detailLabel}>{label}</Text>
+                <Text style={styles.detailsText}>{value}</Text>
+            </View>
+        </View>
+    );
+
+    const styles = StyleSheet.create({
+        modalOverlay: {
+            flex: 1,
+            justifyContent: 'flex-end'
+        },
+        courseDetailsPanel: {
+            backgroundColor: colors.surface,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingTop: 16,
+            paddingBottom: 24,
+            paddingHorizontal: 24,
+            elevation: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            marginBottom: 0,
+        },
+        dragHandleArea: {
+            width: '100%',
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: -10,
+            paddingTop: 10,
+        },
+        modalDragBar: {
+            width: 40,
+            height: 5,
+            backgroundColor: colors.border,
+            borderRadius: 3,
+            marginBottom: 16,
+        },
+        detailsHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 24,
+        },
+        titleContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        courseColorIndicator: {
+            width: 6,
+            height: 28,
+            borderRadius: 3,
+            marginRight: 12,
+        },
+        detailsTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            flex: 1,
+        },
+        closeButton: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        detailsContent: {
+            marginBottom: 24,
+        },
+        detailsItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 14,
+        },
+        iconContainer: {
+            width: 42,
+            height: 42,
+            borderRadius: 12,
+            backgroundColor: colors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 16,
+        },
+        detailTextContainer: {
+            flex: 1,
+        },
+        detailLabel: {
+            fontSize: 13,
+            color: colors.text.primary,
+            marginBottom: 2,
+        },
+        detailsText: {
+            fontSize: 16,
+            color: colors.text.primary,
+            fontWeight: '500',
+        },
+        separator: {
+            height: 1,
+            backgroundColor: colors.border,
+            marginVertical: 2,
+        },
+    });
+
     return (
         <Modal
             visible={visible}
@@ -89,7 +203,7 @@ const ScheduleModal = ({ selectedCourse, detailsAnimation, toggleCourseDetails, 
                             onPress={closeModal}
                             accessibilityLabel="Fermer les détails du cours"
                         >
-                            <Ionicons name="close" size={22} color="#555" />
+                            <Ionicons name="close" size={22} color="#f00" />
                         </TouchableOpacity>
                     </View>
 
@@ -122,119 +236,5 @@ const ScheduleModal = ({ selectedCourse, detailsAnimation, toggleCourseDetails, 
     );
 };
 
-// Composant réutilisable pour les éléments de détail
-const DetailItem = ({ icon, label, value }) => (
-    <View style={styles.detailsItem}>
-        <View style={styles.iconContainer}>
-            <Ionicons name={icon} size={22} color="#5B64DA" />
-        </View>
-        <View style={styles.detailTextContainer}>
-            <Text style={styles.detailLabel}>{label}</Text>
-            <Text style={styles.detailsText}>{value}</Text>
-        </View>
-    </View>
-);
-
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end'
-    },
-    courseDetailsPanel: {
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingTop: 16,
-        paddingBottom: 24,
-        paddingHorizontal: 24,
-        elevation: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        marginBottom: 0,
-    },
-    dragHandleArea: {
-        width: '100%',
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -10,
-        paddingTop: 10,
-    },
-    modalDragBar: {
-        width: 40,
-        height: 5,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 3,
-        marginBottom: 16,
-    },
-    detailsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 24,
-    },
-    titleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    courseColorIndicator: {
-        width: 6,
-        height: 28,
-        borderRadius: 3,
-        marginRight: 12,
-    },
-    detailsTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#222',
-        flex: 1,
-    },
-    closeButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailsContent: {
-        marginBottom: 24,
-    },
-    detailsItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-    },
-    iconContainer: {
-        width: 42,
-        height: 42,
-        borderRadius: 12,
-        backgroundColor: '#F0F3FF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    detailTextContainer: {
-        flex: 1,
-    },
-    detailLabel: {
-        fontSize: 13,
-        color: '#999',
-        marginBottom: 2,
-    },
-    detailsText: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
-    },
-    separator: {
-        height: 1,
-        backgroundColor: '#F0F0F0',
-        marginVertical: 2,
-    },
-});
 
 export default ScheduleModal;

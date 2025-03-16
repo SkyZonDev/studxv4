@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Animated, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +42,7 @@ const getFullDay = (currentDay) => {
 }
 
 const ScheduleScreen = () => {
-    const { colors } = useTheme();
+    const { colors, isDarkMode } = useTheme();
     const insets = useSafeAreaInsets();
 
     // Référence pour le ScrollView
@@ -50,7 +50,6 @@ const ScheduleScreen = () => {
 
     // Utilisation du contexte du calendrier
     const {
-        formattedEvents,
         isLoading,
         error,
         currentWeek,
@@ -63,7 +62,6 @@ const ScheduleScreen = () => {
         getDateFromDayLabel,
         changeWeek,
         resetToCurrentWeek,
-        setCurrentWeek,
         DAYS
     } = useCalendar();
 
@@ -71,7 +69,6 @@ const ScheduleScreen = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [showCourseDetails, setShowCourseDetails] = useState(false);
-    const detailsAnimation = useRef(new Animated.Value(0)).current;
 
     // État pour suivre l'heure actuelle
     const [currentTimePosition, setCurrentTimePosition] = useState(0);
@@ -177,24 +174,13 @@ const ScheduleScreen = () => {
     // Animation pour afficher/masquer les détails du cours
     const toggleCourseDetails = (course) => {
         if (selectedCourse && selectedCourse.id === course.id) {
-            // Fermer les détails si on clique sur le même cours
-            Animated.timing(detailsAnimation, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: false,
-            }).start(() => {
-                setShowCourseDetails(false);
-                setSelectedCourse(null);
-            });
+            setShowCourseDetails(false);
+            setSelectedCourse(null);
+
         } else {
             // Afficher les détails du nouveau cours sélectionné
             setSelectedCourse(course);
             setShowCourseDetails(true);
-            Animated.timing(detailsAnimation, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: false,
-            }).start();
         }
     };
 
@@ -260,13 +246,405 @@ const ScheduleScreen = () => {
         return calculatedNextDay === actualNextDay;
     }
 
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingBottom: 15,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 15,
+        },
+        headerButtons: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        backButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        headerTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.primary.contrast,
+        },
+        calendarButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        viewModeButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        weekSelector: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 15,
+            paddingHorizontal: 10,
+        },
+        weekText: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.primary.contrast,
+            textDecorationLine: 'underline',
+            textDecorationStyle: 'dotted',
+            textAlign: 'center',
+        },
+        daysNav: {
+            display: 'flex',
+            flexDirection: 'row',
+            maxHeight: 50,
+        },
+        daysNavContent: {
+            paddingHorizontal: 5,
+        },
+        dayButton: {
+            paddingHorizontal: 15,
+            paddingVertical: 8,
+            borderRadius: 20,
+            marginHorizontal: 5,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+        selectedDayButton: {
+            backgroundColor: colors.surface,
+        },
+        dayText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: colors.primary.contrast,
+        },
+        selectedDayText: {
+            color: colors.primary.main,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 10,
+            paddingTop: 15,
+        },
+        timelineContainer: {
+            flexDirection: 'row',
+        },
+        hoursColumn: {
+            width: 50,
+            transform: [{ translateY: -18 }], // Décaler les heures pour correspondre à la grille
+        },
+        hourCell: {
+            height: 35, // Hauteur réduite pour accommoder les demi-heures
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        hourText: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+            fontWeight: '500',
+        },
+        coursesGrid: {
+            flex: 1,
+            position: 'relative',
+        },
+        hourLine: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            height: 1,
+            zIndex: 1,
+        },
+        fullHourLine: {
+            backgroundColor: isDarkMode ? colors.text.muted : '#CCCCCC', // Ligne plus prononcée pour les heures complètes
+            height: 1,
+        },
+        halfHourLine: {
+            backgroundColor: colors.border, // Ligne moins prononcée pour les demi-heures
+            height: 0.5,
+        },
+
+        // Styles pour l'indicateur d'heure actuelle
+        currentTimeIndicator: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            zIndex: 3,  // Au-dessus des cours et des lignes d'heure
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        currentTimeDot: {
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            backgroundColor: '#FF5252',  // Rouge
+            marginLeft: -6,  // Positionnement pour l'alignement
+        },
+        currentTimeLine: {
+            flex: 1,
+            height: 2,
+            backgroundColor: '#FF5252',  // Rouge
+        },
+        courseItem: {
+            position: 'absolute',
+            left: 5,
+            right: 5,
+            borderRadius: 8,
+            padding: 10,
+            borderLeftWidth: 4,
+            backgroundColor: '#E6EFFF',
+            // elevation: 2,
+            zIndex: 2,
+        },
+        selectedCourseItem: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+        },
+        courseTitle: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            marginBottom: 4,
+        },
+        courseTime: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+            marginBottom: 2,
+        },
+        courseRoom: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+        },
+
+        // Styles pour la vue en liste
+        listContainer: {
+            flex: 1,
+            paddingHorizontal: 15,
+            paddingTop: 20,
+        },
+        sectionContainer: {
+            marginBottom: 24,
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 2,
+            overflow: 'hidden',
+        },
+        sectionHeader: {
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        sectionTitle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+        },
+        sectionDate: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+        },
+        noCourseContainer: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 30,
+        },
+        noCourseText: {
+            marginTop: 12,
+            fontSize: 16,
+            color: colors.text.tertiary,
+            textAlign: 'center',
+        },
+        weekendText: {
+            marginTop: 12,
+            fontSize: 18,
+            fontWeight: '600',
+            color: colors.text.primary,
+            textAlign: 'center',
+        },
+        courseListItem: {
+            flexDirection: 'row',
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+        courseColorBar: {
+            width: 4,
+            borderRadius: 2,
+            marginRight: 12,
+        },
+        courseListContent: {
+            flex: 1,
+        },
+        courseListHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        courseListTitle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            flex: 1,
+        },
+        courseListTime: {
+            fontSize: 14,
+            fontWeight: '500',
+        },
+        courseListDetails: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+        },
+        courseListDetail: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 16,
+            marginTop: 4,
+        },
+        courseListDetailText: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            marginLeft: 4,
+        },
+
+        // Styles pour le panneau de détails
+        courseDetailsPanel: {
+            position: 'absolute',
+            bottom: 50,
+            left: 0,
+            right: 0,
+            backgroundColor: '#FFFFFF',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingVertical: 20,
+            paddingHorizontal: 20,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -3 },
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+        },
+        detailsHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        courseColorIndicator: {
+            width: 4,
+            height: 24,
+            borderRadius: 2,
+            marginRight: 12,
+        },
+        detailsTitle: {
+            flex: 1,
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#333',
+        },
+        closeButton: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: '#F0F0F0',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        detailsContent: {
+            marginBottom: 10,
+        },
+        detailsRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 15,
+        },
+        detailsItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        detailsText: {
+            fontSize: 14,
+            color: '#333',
+            marginLeft: 8,
+        },
+        detailsButton: {
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+        },
+        detailsButtonText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#FFFFFF',
+        },
+
+        // Styles pour le loader et les erreurs
+        loaderContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+        },
+        loaderText: {
+            fontSize: 16,
+            color: '#757575',
+            textAlign: 'center',
+        },
+        errorContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+        },
+        errorText: {
+            fontSize: 16,
+            color: '#D32F2F',
+            textAlign: 'center',
+            marginBottom: 16,
+        },
+        retryButton: {
+            backgroundColor: '#4A6FE1',
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+        },
+        retryButtonText: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#FFFFFF',
+        },
+    });
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
 
             {/* Header avec dégradé */}
             <LinearGradient
-                colors={['#4A6FE1', '#6C92F4']}
+                colors={[colors.gradients.primary[0], colors.gradients.primary[1]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
@@ -279,7 +657,7 @@ const ScheduleScreen = () => {
                             style={[styles.viewModeButton, { marginRight: 10 }]}
                             onPress={() => fetchCalendarData()}
                         >
-                            <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                            <Ionicons name="refresh" size={20} color={colors.primary.contrast} />
                         </TouchableOpacity>
 
                         {/* Bouton pour basculer entre les vues grille et liste */}
@@ -290,7 +668,7 @@ const ScheduleScreen = () => {
                             <Ionicons
                                 name={viewMode === 'grid' ? "list" : "grid"}
                                 size={20}
-                                color="#FFFFFF"
+                                color={colors.primary.contrast}
                             />
                         </TouchableOpacity>
                     </View>
@@ -499,401 +877,11 @@ const ScheduleScreen = () => {
 
             {/* Panneau de détails du cours (animé) */}
             {showCourseDetails && selectedCourse && (
-                <ScheduleModal selectedCourse={selectedCourse} detailsAnimation={detailsAnimation} toggleCourseDetails={toggleCourseDetails} />
+                <ScheduleModal selectedCourse={selectedCourse} colors={colors} toggleCourseDetails={toggleCourseDetails} visible={showCourseDetails} />
             )}
         </SafeAreaView>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingBottom: 15,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    headerButtons: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
-    calendarButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    viewModeButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    weekSelector: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-        paddingHorizontal: 10,
-    },
-    weekText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#FFFFFF',
-        textDecorationLine: 'underline',
-        textDecorationStyle: 'dotted',
-        textAlign: 'center',
-    },
-    daysNav: {
-        display: 'flex',
-        flexDirection: 'row',
-        maxHeight: 50,
-    },
-    daysNavContent: {
-        paddingHorizontal: 5,
-    },
-    dayButton: {
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginHorizontal: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    },
-    selectedDayButton: {
-        backgroundColor: '#FFFFFF',
-    },
-    dayText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#FFFFFF',
-    },
-    selectedDayText: {
-        color: '#4A6FE1',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 10,
-        paddingTop: 15,
-    },
-    timelineContainer: {
-        flexDirection: 'row',
-    },
-    hoursColumn: {
-        width: 50,
-        transform: [{ translateY: -18 }], // Décaler les heures pour correspondre à la grille
-    },
-    hourCell: {
-        height: 35, // Hauteur réduite pour accommoder les demi-heures
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    hourText: {
-        fontSize: 12,
-        color: '#757575',
-        fontWeight: '500',
-    },
-    coursesGrid: {
-        flex: 1,
-        position: 'relative',
-    },
-    hourLine: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 1,
-        zIndex: 1,
-    },
-    fullHourLine: {
-        backgroundColor: '#CCCCCC', // Ligne plus prononcée pour les heures complètes
-        height: 1,
-    },
-    halfHourLine: {
-        backgroundColor: '#E8E8E8', // Ligne moins prononcée pour les demi-heures
-        height: 0.5,
-    },
-    // Styles pour l'indicateur d'heure actuelle
-    currentTimeIndicator: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 3,  // Au-dessus des cours et des lignes d'heure
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    currentTimeDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#FF5252',  // Rouge
-        marginLeft: -6,  // Positionnement pour l'alignement
-    },
-    currentTimeLine: {
-        flex: 1,
-        height: 2,
-        backgroundColor: '#FF5252',  // Rouge
-    },
-    courseItem: {
-        position: 'absolute',
-        left: 5,
-        right: 5,
-        borderRadius: 8,
-        padding: 10,
-        borderLeftWidth: 4,
-        backgroundColor: '#E6EFFF',
-        // elevation: 2,
-        zIndex: 2,
-    },
-    selectedCourseItem: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-    },
-    courseTitle: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    courseTime: {
-        fontSize: 12,
-        color: '#757575',
-        marginBottom: 2,
-    },
-    courseRoom: {
-        fontSize: 12,
-        color: '#757575',
-    },
-
-    // Styles pour la vue en liste
-    listContainer: {
-        flex: 1,
-        paddingHorizontal: 15,
-        paddingTop: 20,
-    },
-    sectionContainer: {
-        marginBottom: 24,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-        overflow: 'hidden',
-    },
-    sectionHeader: {
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333333',
-    },
-    sectionDate: {
-        fontSize: 12,
-        color: '#757575',
-    },
-    noCourseContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 30,
-    },
-    noCourseText: {
-        marginTop: 12,
-        fontSize: 16,
-        color: '#757575',
-        textAlign: 'center',
-    },
-    weekendText: {
-        marginTop: 12,
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333333',
-        textAlign: 'center',
-    },
-    courseListItem: {
-        flexDirection: 'row',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    courseColorBar: {
-        width: 4,
-        borderRadius: 2,
-        marginRight: 12,
-    },
-    courseListContent: {
-        flex: 1,
-    },
-    courseListHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    courseListTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333333',
-        flex: 1,
-    },
-    courseListTime: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    courseListDetails: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    courseListDetail: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginRight: 16,
-        marginTop: 4,
-    },
-    courseListDetailText: {
-        fontSize: 14,
-        color: '#757575',
-        marginLeft: 4,
-    },
-
-    // Styles pour le panneau de détails
-    courseDetailsPanel: {
-        position: 'absolute',
-        bottom: 50,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFFFFF',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingVertical: 20,
-        paddingHorizontal: 20,
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-    },
-    detailsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    courseColorIndicator: {
-        width: 4,
-        height: 24,
-        borderRadius: 2,
-        marginRight: 12,
-    },
-    detailsTitle: {
-        flex: 1,
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    closeButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#F0F0F0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailsContent: {
-        marginBottom: 10,
-    },
-    detailsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    detailsItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    detailsText: {
-        fontSize: 14,
-        color: '#333',
-        marginLeft: 8,
-    },
-    detailsButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-    },
-    detailsButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#FFFFFF',
-    },
-
-    // Styles pour le loader et les erreurs
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    loaderText: {
-        fontSize: 16,
-        color: '#757575',
-        textAlign: 'center',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#D32F2F',
-        textAlign: 'center',
-        marginBottom: 16,
-    },
-    retryButton: {
-        backgroundColor: '#4A6FE1',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-    },
-    retryButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#FFFFFF',
-    },
-});
 
 export default ScheduleScreen;
