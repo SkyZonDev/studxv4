@@ -14,39 +14,6 @@ import ScheduleModal from '../components/modal/ScheduleModal';
 import { useGrades } from '../context/gradesContext';
 import GradesCard from '../components/card/GradesCard';
 
-const SectionTitleWithRefresh = ({ title, isRefreshing, styles }) => {
-    const rotateAnim = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        if (isRefreshing) {
-            Animated.loop(
-                Animated.timing(rotateAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: true,
-                })
-            ).start();
-        } else {
-            rotateAnim.setValue(0);
-        }
-    }, [isRefreshing]);
-
-    const spin = rotateAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '360deg']
-    });
-
-    return (
-        <View style={styles.sectionTitleContainer}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-            {isRefreshing && (
-                <Animated.View style={{ transform: [{ rotate: spin }], marginLeft: 8 }}>
-                    <Ionicons name="sync" size={16} color="#4A6FE1" />
-                </Animated.View>
-            )}
-        </View>
-    );
-};
 
 const HomeScreen = () => {
     const { colors } = useTheme();
@@ -531,6 +498,40 @@ const HomeScreen = () => {
             <Ionicons name="chevron-forward" size={20} color="#A0A0A0" />
         </TouchableOpacity>
     );
+
+    const SectionTitleWithRefresh = ({ title, isRefreshing, styles }) => {
+        const rotateAnim = useRef(new Animated.Value(0)).current;
+
+        useEffect(() => {
+            if (isRefreshing) {
+                Animated.loop(
+                    Animated.timing(rotateAnim, {
+                        toValue: 1,
+                        duration: 1000,
+                        useNativeDriver: true,
+                    })
+                ).start();
+            } else {
+                rotateAnim.setValue(0);
+            }
+        }, [isRefreshing]);
+
+        const spin = rotateAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['0deg', '360deg']
+        });
+
+        return (
+            <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionTitle}>{title}</Text>
+                {isRefreshing && (
+                    <Animated.View style={{ transform: [{ rotate: spin }], marginLeft: 8 }}>
+                        <Ionicons name="sync" size={16} color={colors.primary.main} />
+                    </Animated.View>
+                )}
+            </View>
+        );
+    };
 
     const toggleCourseDetails = (course) => {
         if (selectedCourse && selectedCourse.id === course.id) {

@@ -26,6 +26,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/themeContext';
 
+const { width, height } = Dimensions.get('window');
+
 const LoginScreen = () => {
     const toast = useToast();
     const navigation = useNavigation();
@@ -54,7 +56,6 @@ const LoginScreen = () => {
         login,
         loginWithPasswordOnly,
         loading,
-        error,
         logout,
         needsPasswordOnly,
         storedUsername
@@ -221,6 +222,255 @@ const LoginScreen = () => {
     const handleNavLog = () => {
         navigation.navigate('Logs')
     }
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: 'transparent',
+        },
+        scrollContent: {
+            flexGrow: 1,
+            justifyContent: 'space-between',
+            minHeight: height,
+        },
+        gradient: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: height,
+        },
+        logoContainer: {
+            alignItems: 'center',
+            marginTop: height * 0.12,
+            paddingBottom: 20,
+        },
+        logoText: {
+            fontSize: 36,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginTop: 12,
+            textShadowColor: 'rgba(0, 0, 0, 0.2)',
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 4,
+        },
+        logoImg: {
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 6,
+            },
+            shadowOpacity: 0.35,
+            shadowRadius: 6.5,
+            elevation: 10,
+        },
+        tagline: {
+            color: colors.primary.contrast,
+            fontSize: 18,
+            marginTop: 12,
+            textAlign: 'center',
+            fontWeight: '500',
+            textShadowColor: 'rgba(0, 0, 0, 0.1)',
+            textShadowOffset: { width: 0.5, height: 0.5 },
+            textShadowRadius: 2,
+        },
+        formContainer: {
+            backgroundColor: colors.background,
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+            paddingHorizontal: 24,
+            paddingTop: 36,
+            paddingBottom: 24,
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: -3,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 4.65,
+            elevation: 6,
+            marginTop: 'auto',
+        },
+        welcomeBackContainer: {
+            alignItems: 'center',
+            marginBottom: 24,
+        },
+        welcomeBack: {
+            fontSize: 20,
+            color: colors.text.primary,
+            textAlign: 'center',
+        },
+        emailHighlight: {
+            color: colors.primary.main,
+            fontWeight: 'bold',
+        },
+        inputContainer: {
+            marginBottom: 22,
+        },
+        label: {
+            fontSize: 15,
+            color: colors.text.primary,
+            marginBottom: 8,
+            fontWeight: '500',
+        },
+        input: {
+            backgroundColor: colors.border,
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            fontSize: 16,
+            color: colors.text.primary,
+            borderWidth: 1,
+            borderColor: colors.border,
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 2,
+        },
+        inputError: {
+            borderColor: '#FF3B30',
+        },
+        errorText: {
+            color: '#FF3B30',
+            fontSize: 13,
+            marginTop: 5,
+            marginLeft: 2,
+        },
+        rememberMeContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 24,
+        },
+        checkbox: {
+            marginRight: 12,
+            borderRadius: 4,
+            height: 20,
+            width: 20,
+        },
+        rememberMeText: {
+            fontSize: 15,
+            color: colors.text.primary,
+        },
+        loginButton: {
+            backgroundColor: colors.primary.main,
+            borderRadius: 14,
+            paddingVertical: 16,
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        loginButtonDisabled: {
+            backgroundColor: colors.text.muted,
+        },
+        loginButtonText: {
+            color: colors.primary.contrast,
+            fontSize: 18,
+            fontWeight: '600',
+        },
+        useAnotherAccountButton: {
+            padding: 12,
+            alignItems: 'center',
+        },
+        useAnotherAccountText: {
+            color: colors.primary.main,
+            fontSize: 16,
+            fontWeight: '500',
+        },
+        footer: {
+            marginTop: 20,
+            alignItems: 'center',
+        },
+        footerText: {
+            color: colors.text.tertiary,
+            fontSize: 15,
+            marginBottom: 4,
+        },
+        footerLink: {
+            color: colors.primary.main,
+            fontWeight: '600',
+            fontSize: 15,
+        },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 20,
+        },
+        modalContent: {
+            backgroundColor: colors.background,
+            borderRadius: 24,
+            padding: 15,
+            width: '100%',
+            maxWidth: 500,
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 3,
+            },
+            shadowOpacity: 0.3,
+            shadowRadius: 4.65,
+            elevation: 8,
+        },
+        modalTitle: {
+            fontSize: 22,
+            fontWeight: 'bold',
+            marginTop: 10,
+            marginBottom: 20,
+            textAlign: 'center',
+            color: colors.primary.main,
+        },
+        modalText: {
+            fontSize: 16,
+            marginBottom: 15,
+            textAlign: 'center',
+            lineHeight: 24,
+            color: colors.text.tertiary,
+        },
+        modalButtons: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginTop: 24,
+        },
+        modalCancelButton: {
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.text.tertiary,
+            flex: 1,
+            marginRight: 5,
+            alignItems: 'center',
+        },
+        modalCancelText: {
+            color: colors.text.tertiary,
+            fontWeight: '600',
+            fontSize: 16,
+        },
+        modalAcceptButton: {
+            backgroundColor: colors.primary.main,
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            borderRadius: 12,
+            flex: 1,
+            marginLeft: 5,
+            alignItems: 'center',
+        },
+        modalAcceptButtonDisabled: {
+            backgroundColor: colors.text.muted,
+        },
+        modalAcceptText: {
+            color: colors.primary.contrast,
+            fontWeight: '600',
+            fontSize: 16,
+        },
+    });
 
     return (
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
@@ -440,263 +690,5 @@ const LoginScreen = () => {
     );
 };
 
-const { width, height } = Dimensions.get('window');
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'transparent',
-    },
-    scrollContent: {
-        flexGrow: 1,
-        justifyContent: 'space-between',
-        minHeight: height,
-    },
-    gradient: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        top: 0,
-        height: height,
-    },
-    logoContainer: {
-        alignItems: 'center',
-        marginTop: height * 0.12,
-        paddingBottom: 20,
-    },
-    logoText: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: 'white',
-        marginTop: 12,
-        textShadowColor: 'rgba(0, 0, 0, 0.2)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 4,
-    },
-    logoImg: {
-        width: 90,
-        height: 90,
-        borderRadius: 45,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 6,
-        },
-        shadowOpacity: 0.35,
-        shadowRadius: 6.5,
-        elevation: 10,
-    },
-    tagline: {
-        color: 'white',
-        fontSize: 18,
-        marginTop: 12,
-        textAlign: 'center',
-        fontWeight: '500',
-        textShadowColor: 'rgba(0, 0, 0, 0.1)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 2,
-    },
-    formContainer: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        paddingHorizontal: 24,
-        paddingTop: 36,
-        paddingBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: -3,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4.65,
-        elevation: 6,
-        marginTop: 'auto',
-    },
-    welcomeBackContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    welcomeBack: {
-        fontSize: 20,
-        color: '#333',
-        textAlign: 'center',
-    },
-    emailHighlight: {
-        color: '#4158D0',
-        fontWeight: 'bold',
-    },
-    inputContainer: {
-        marginBottom: 22,
-    },
-    label: {
-        fontSize: 15,
-        color: '#333',
-        marginBottom: 8,
-        fontWeight: '500',
-    },
-    input: {
-        backgroundColor: '#F8F8F8',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: '#333',
-        borderWidth: 1,
-        borderColor: '#EBEBEB',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 1,
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    inputError: {
-        borderColor: '#FF3B30',
-    },
-    errorText: {
-        color: '#FF3B30',
-        fontSize: 13,
-        marginTop: 5,
-        marginLeft: 2,
-    },
-    rememberMeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    checkbox: {
-        marginRight: 12,
-        borderRadius: 4,
-        height: 20,
-        width: 20,
-    },
-    rememberMeText: {
-        fontSize: 15,
-        color: '#333',
-    },
-    loginButton: {
-        backgroundColor: '#4158D0',
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-        shadowColor: '#4158D0',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
-        elevation: 8,
-        marginBottom: 16,
-    },
-    loginButtonDisabled: {
-        backgroundColor: '#A0A0A0',
-    },
-    loginButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    useAnotherAccountButton: {
-        padding: 12,
-        alignItems: 'center',
-    },
-    useAnotherAccountText: {
-        color: '#4158D0',
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    footer: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    footerText: {
-        color: '#666',
-        fontSize: 15,
-        marginBottom: 4,
-    },
-    footerLink: {
-        color: '#4158D0',
-        fontWeight: '600',
-        fontSize: 15,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modalContent: {
-        backgroundColor: 'white',
-        borderRadius: 24,
-        padding: 15,
-        width: '100%',
-        maxWidth: 500,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 3,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
-        elevation: 8,
-    },
-    modalTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginTop: 10,
-        marginBottom: 20,
-        textAlign: 'center',
-        color: '#4158D0',
-    },
-    modalText: {
-        fontSize: 16,
-        marginBottom: 15,
-        textAlign: 'center',
-        lineHeight: 24,
-        color: '#444',
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 24,
-    },
-    modalCancelButton: {
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#DDD',
-        flex: 1,
-        marginRight: 5,
-        alignItems: 'center',
-    },
-    modalCancelText: {
-        color: '#666',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-    modalAcceptButton: {
-        backgroundColor: '#4158D0',
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        flex: 1,
-        marginLeft: 5,
-        alignItems: 'center',
-    },
-    modalAcceptButtonDisabled: {
-        backgroundColor: '#A0A0A0',
-    },
-    modalAcceptText: {
-        color: 'white',
-        fontWeight: '600',
-        fontSize: 16,
-    },
-});
 
 export default LoginScreen;

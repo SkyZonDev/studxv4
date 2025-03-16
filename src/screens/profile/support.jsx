@@ -1,31 +1,22 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    SafeAreaView,
-    StatusBar,
-    TextInput,
-    KeyboardAvoidingView,
-    Platform,
-    Linking
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../context/themeContext';
 
 const SupportPage = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const toast = useToast();
+    const {colors } = useTheme();
 
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const email = 'studx.esme@gmail.com';
 
     const categories = [
         { id: 1, name: "Problème technique", icon: "construct" },
@@ -91,13 +82,13 @@ const SupportPage = () => {
             <View style={[
                 styles.categoryIcon,
                 selectedCategory?.id === category.id
-                    ? { backgroundColor: '#4A6FE1' }
-                    : { backgroundColor: '#4A6FE120' }
+                    ? { backgroundColor: colors.primary.main }
+                    : { backgroundColor: colors.info.border }
             ]}>
                 <Ionicons
                     name={category.icon}
                     size={22}
-                    color={selectedCategory?.id === category.id ? "#FFFFFF" : "#4A6FE1"}
+                    color={selectedCategory?.id === category.id ? colors.primary.contrast : colors.primary.main }
                 />
             </View>
             <Text style={[
@@ -108,6 +99,204 @@ const SupportPage = () => {
             </Text>
         </TouchableOpacity>
     );
+
+    const openEmailApp = () => {
+        const emailUrl = `mailto:${email}`;
+        Linking.canOpenURL(emailUrl)
+            .then((supported) => {
+                if (supported) {
+                    Linking.openURL(emailUrl);
+                } else {
+                    console.log("Impossible d'ouvrir l'application de messagerie.");
+                }
+            })
+            .catch((err) => console.error('Une erreur est survenue', err));
+    };
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingTop: 15,
+            paddingBottom: 25,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        backButton: {
+            padding: 5,
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: colors.primary.contrast,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 20,
+        },
+        introContainer: {
+            marginTop: 24,
+            marginBottom: 10,
+        },
+        introTitle: {
+            fontSize: 22,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginBottom: 8,
+        },
+        introText: {
+            fontSize: 14,
+            color: colors.text.tertiary,
+            lineHeight: 20,
+        },
+        section: {
+            marginTop: 24,
+        },
+        sectionTitle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginBottom: 12,
+        },
+        card: {
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 16,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        categoriesContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+        },
+        categoryItem: {
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 15,
+            width: '48%',
+            alignItems: 'center',
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+        },
+        selectedCategoryItem: {
+            backgroundColor: colors.border,
+            borderWidth: 1,
+            borderColor: colors.primary.main,
+        },
+        categoryIcon: {
+            width: 46,
+            height: 46,
+            borderRadius: 23,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        categoryName: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: colors.text.primary,
+        },
+        selectedCategoryName: {
+            color: colors.primary.main,
+            fontWeight: '600',
+        },
+        inputContainer: {
+            marginBottom: 16,
+        },
+        inputLabel: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: colors.text.primary,
+            marginBottom: 8,
+        },
+        input: {
+            backgroundColor: colors.surface,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            fontSize: 14,
+            color: colors.text.primary,
+            borderWidth: 2,
+            borderColor: colors.border,
+        },
+        textArea: {
+            height: 120,
+            paddingTop: 12,
+        },
+        submitButton: {
+            backgroundColor: colors.primary.main,
+            borderRadius: 12,
+            paddingVertical: 16,
+            alignItems: 'center',
+            marginTop: 24,
+            elevation: 2,
+            shadowColor: colors.primary.main,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+        },
+        submitButtonText: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.primary.contrast,
+        },
+        contactMethod: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+        contactIcon: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.info.light,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+        contactDetails: {
+            flex: 1,
+        },
+        contactTitle: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: colors.text.primary,
+        },
+        contactInfo: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+            marginTop: 2,
+        },
+        contactButton: {
+            backgroundColor: colors.info.light,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 15,
+        },
+        contactButtonText: {
+            fontSize: 12,
+            fontWeight: '500',
+            color: colors.primary.main,
+        },
+    });
 
     return (
         <SafeAreaView style={styles.container}>
@@ -214,10 +403,10 @@ const SupportPage = () => {
                                 </View>
                                 <View style={styles.contactDetails}>
                                     <Text style={styles.contactTitle}>Email</Text>
-                                    <Text style={styles.contactInfo}>studx.esme@gmail.com</Text>
+                                    <Text style={styles.contactInfo}>{email}</Text>
                                 </View>
-                                <TouchableOpacity style={styles.contactButton}>
-                                    <Text style={styles.contactButtonText}>Copier</Text>
+                                <TouchableOpacity style={styles.contactButton} onPress={openEmailApp}>
+                                    <Text style={styles.contactButtonText}>Ouvrir</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -230,189 +419,5 @@ const SupportPage = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 25,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 5,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-    },
-    introContainer: {
-        marginTop: 24,
-        marginBottom: 10,
-    },
-    introTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#333333',
-        marginBottom: 8,
-    },
-    introText: {
-        fontSize: 14,
-        color: '#666666',
-        lineHeight: 20,
-    },
-    section: {
-        marginTop: 24,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 12,
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 16,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    categoriesContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-    categoryItem: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 15,
-        width: '48%',
-        alignItems: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-    },
-    selectedCategoryItem: {
-        backgroundColor: '#EBF1FF',
-        borderWidth: 1,
-        borderColor: '#4A6FE1',
-    },
-    categoryIcon: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    categoryName: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333333',
-    },
-    selectedCategoryName: {
-        color: '#4A6FE1',
-        fontWeight: '600',
-    },
-    inputContainer: {
-        marginBottom: 16,
-    },
-    inputLabel: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333333',
-        marginBottom: 8,
-    },
-    input: {
-        backgroundColor: '#F5F7FA',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 14,
-        color: '#333333',
-        borderWidth: 1,
-        borderColor: '#E5E5E5',
-    },
-    textArea: {
-        height: 120,
-        paddingTop: 12,
-    },
-    submitButton: {
-        backgroundColor: '#4A6FE1',
-        borderRadius: 12,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginTop: 24,
-        elevation: 2,
-        shadowColor: '#4A6FE1',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-    },
-    submitButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#FFFFFF',
-    },
-    contactMethod: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    contactIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#4A6FE120',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    contactDetails: {
-        flex: 1,
-    },
-    contactTitle: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333333',
-    },
-    contactInfo: {
-        fontSize: 12,
-        color: '#757575',
-        marginTop: 2,
-    },
-    contactButton: {
-        backgroundColor: '#4A6FE120',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
-    },
-    contactButtonText: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: '#4A6FE1',
-    },
-});
 
 export default SupportPage;

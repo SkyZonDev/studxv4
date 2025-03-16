@@ -7,11 +7,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useToast } from '../../hooks/useToast';
 import { useUser } from '../../context/userContext';
 import CustomAlert from '../../components/alert/CustomAlert';
+import { useTheme } from '../../context/themeContext';
 
 const PrivacyPage = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const toast = useToast();
+    const { colors } = useTheme();
     const { removeAllData } = useUser();
 
     // États pour les options de confidentialité
@@ -34,14 +36,14 @@ const PrivacyPage = () => {
 
     const renderSettingItem = (icon, title, description, value, onPress, last = false, rightComponent = null) => (
         <TouchableOpacity
-            style={[styles.settingItem, !last ? { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' } : null]}
+            style={[styles.settingItem, !last ? { borderBottomWidth: 1, borderBottomColor: colors.border } : null]}
             onPress={onPress}
             activeOpacity={0.7}
         >
             <View style={styles.settingContent}>
                 <View style={styles.settingLeft}>
-                    <View style={[styles.iconContainer, { backgroundColor: '#4A6FE120' }]}>
-                        <Ionicons name={icon} size={20} color="#4A6FE1" />
+                    <View style={[styles.iconContainer, { backgroundColor: colors.info.border }]}>
+                        <Ionicons name={icon} size={20} color={colors.primary.main} />
                     </View>
                     <View style={styles.settingTexts}>
                         <Text style={styles.settingTitle}>{title}</Text>
@@ -50,12 +52,100 @@ const PrivacyPage = () => {
                 </View>
                 <View style={styles.settingRight}>
                     {rightComponent || (
-                        <Ionicons name="chevron-forward" size={20} color="#A0A0A0" />
+                        <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
                     )}
                 </View>
             </View>
         </TouchableOpacity>
     );
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingTop: 15,
+            paddingBottom: 25,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        backButton: {
+            padding: 5,
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: colors.primary.contrast,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 20,
+        },
+        section: {
+            marginTop: 24,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginBottom: 12,
+        },
+        card: {
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+            padding: 5,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        settingItem: {
+            padding: 16,
+        },
+        settingContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        settingLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        settingTexts: {
+            flex: 1,
+        },
+        iconContainer: {
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+        settingTitle: {
+            fontSize: 14,
+            color: colors.text.primary,
+            fontWeight: '500',
+        },
+        settingDescription: {
+            fontSize: 12,
+            color: colors.text.tertiary,
+            marginTop: 2,
+        },
+        settingRight: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+    });
 
     return (
         <SafeAreaView style={styles.container}>
@@ -63,14 +153,14 @@ const PrivacyPage = () => {
 
             {/* Header with Gradient */}
             <LinearGradient
-                colors={['#4A6FE1', '#6C92F4']}
+                colors={[colors.gradients.primary[0], colors.gradients.primary[1]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
             >
                 <View style={styles.headerContent}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                        <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Confidentialité</Text>
                     <View style={styles.backButton}>
@@ -214,93 +304,5 @@ const PrivacyPage = () => {
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 25,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 5,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-    },
-    section: {
-        marginTop: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 12,
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 5,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    settingItem: {
-        padding: 16,
-    },
-    settingContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    settingLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    settingTexts: {
-        flex: 1,
-    },
-    iconContainer: {
-        width: 34,
-        height: 34,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    settingTitle: {
-        fontSize: 14,
-        color: '#333333',
-        fontWeight: '500',
-    },
-    settingDescription: {
-        fontSize: 12,
-        color: '#757575',
-        marginTop: 2,
-    },
-    settingRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-});
 
 export default PrivacyPage;

@@ -5,11 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../context/themeContext';
 
 const HelpPage = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const toast = useToast();
+    const { colors } = useTheme();
 
     const handleNotImplemented = () => {
         toast.info('Accès impossible', 'Fonctionnalité en cours de développement', {
@@ -50,6 +52,181 @@ const HelpPage = () => {
         </TouchableOpacity>
     );
 
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#F5F7FA',
+        },
+        header: {
+            paddingHorizontal: 20,
+            paddingTop: 15,
+            paddingBottom: 25,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        backButton: {
+            padding: 5,
+        },
+        headerTitle: {
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: '#FFFFFF',
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 20,
+        },
+        searchBar: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            paddingHorizontal: 15,
+            paddingVertical: 12,
+            marginTop: 20,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        searchText: {
+            color: '#757575',
+            marginLeft: 10,
+            fontSize: 14,
+        },
+        section: {
+            marginTop: 24,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: colors.text.primary,
+            marginBottom: 12,
+        },
+        card: {
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            padding: 5,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        helpItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 16,
+        },
+        helpLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        iconContainer: {
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+        helpTexts: {
+            flex: 1,
+        },
+        helpTitle: {
+            fontSize: 14,
+            color: '#333333',
+            fontWeight: '500',
+        },
+        helpDescription: {
+            fontSize: 12,
+            color: '#757575',
+            marginTop: 2,
+        },
+        faqItem: {
+            padding: 16,
+        },
+        faqQuestionContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        faqQuestion: {
+            fontSize: 14,
+            color: '#333333',
+            fontWeight: '500',
+            flex: 1,
+        },
+        topicsContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            marginTop: 5,
+        },
+        topicButton: {
+            width: '48%',
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            padding: 16,
+            alignItems: 'center',
+            marginBottom: 15,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        topicIcon: {
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: '#4A6FE120',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 10,
+        },
+        topicText: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: '#333333',
+        },
+        contactButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#4A6FE1',
+            borderRadius: 12,
+            padding: 15,
+            marginVertical: 8,
+            marginHorizontal: 10,
+        },
+        contactButtonSecondary: {
+            backgroundColor: '#FFFFFF',
+            borderWidth: 1,
+            borderColor: '#4A6FE1',
+        },
+        contactButtonText: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#FFFFFF',
+            marginLeft: 10,
+        },
+        contactButtonTextSecondary: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#4A6FE1',
+            marginLeft: 10,
+        },
+    });
+    
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
@@ -179,179 +356,5 @@ const HelpPage = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 25,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 5,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-    },
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-        marginTop: 20,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    searchText: {
-        color: '#757575',
-        marginLeft: 10,
-        fontSize: 14,
-    },
-    section: {
-        marginTop: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 12,
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 5,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    helpItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 16,
-    },
-    helpLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    iconContainer: {
-        width: 34,
-        height: 34,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    helpTexts: {
-        flex: 1,
-    },
-    helpTitle: {
-        fontSize: 14,
-        color: '#333333',
-        fontWeight: '500',
-    },
-    helpDescription: {
-        fontSize: 12,
-        color: '#757575',
-        marginTop: 2,
-    },
-    faqItem: {
-        padding: 16,
-    },
-    faqQuestionContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    faqQuestion: {
-        fontSize: 14,
-        color: '#333333',
-        fontWeight: '500',
-        flex: 1,
-    },
-    topicsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginTop: 5,
-    },
-    topicButton: {
-        width: '48%',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 16,
-        alignItems: 'center',
-        marginBottom: 15,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    topicIcon: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#4A6FE120',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    topicText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333333',
-    },
-    contactButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#4A6FE1',
-        borderRadius: 12,
-        padding: 15,
-        marginVertical: 8,
-        marginHorizontal: 10,
-    },
-    contactButtonSecondary: {
-        backgroundColor: '#FFFFFF',
-        borderWidth: 1,
-        borderColor: '#4A6FE1',
-    },
-    contactButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#FFFFFF',
-        marginLeft: 10,
-    },
-    contactButtonTextSecondary: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#4A6FE1',
-        marginLeft: 10,
-    },
-});
 
 export default HelpPage;
