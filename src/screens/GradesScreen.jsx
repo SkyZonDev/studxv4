@@ -290,9 +290,9 @@ const GradesScreen = () => {
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
             >
                 <View style={styles.headerContent}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    {/* <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <Text style={styles.headerTitle}>Mes notes</Text>
                     <View style={{ width: 24 }} />
                 </View>

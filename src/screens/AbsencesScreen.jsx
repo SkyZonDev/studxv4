@@ -238,9 +238,9 @@ const AbsencesScreen = () => {
                     <View style={{
                         flexDirection: 'row'
                     }}>
-                        <TouchableOpacity style={styles.headerButton} onPress={() => handleSearch()}>
+                        {/* <TouchableOpacity style={styles.headerButton} onPress={() => handleSearch()}>
                             <Ionicons name="search" size={24} color={colors.primary.contrast} />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <TouchableOpacity style={styles.headerButton} onPress={() => setShowFilterModal(true)}>
                             <Ionicons name="funnel" size={20} color={colors.primary.contrast} />
                         </TouchableOpacity>
