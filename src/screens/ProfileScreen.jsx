@@ -38,7 +38,7 @@ const ProfileScreen = () => {
     };
 
     const renderSettingItem = (icon, title, value, onPress, last = false, rightComponent = null) => (
-        <TouchableOpacity style={[styles.settingItem, !last ? { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' } : null]} onPress={onPress}>
+        <TouchableOpacity style={[styles.settingItem, !last ? { borderBottomWidth: 1, borderBottomColor: colors.border } : null]} onPress={onPress}>
             <View style={styles.settingLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: '#4A6FE120' }]}>
                     <Ionicons name={icon} size={20} color="#4A6FE1" />
@@ -57,7 +57,7 @@ const ProfileScreen = () => {
     );
 
     const renderInfoItem = (label, value, last = false) => (
-        <View style={[styles.infoItem, !last ? { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' } : null]}>
+        <View style={[styles.infoItem, !last ? { borderBottomWidth: 1, borderBottomColor: colors.border } : null]}>
             <Text style={styles.infoLabel}>{label}</Text>
             <Text style={styles.infoValue}>{userData[value]}</Text>
         </View>
@@ -109,7 +109,7 @@ const ProfileScreen = () => {
     const styles = StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: '#F5F7FA',
+            backgroundColor: colors.background,
         },
         header: {
             paddingHorizontal: 20,
@@ -129,43 +129,7 @@ const ProfileScreen = () => {
         headerTitle: {
             fontSize: 20,
             fontWeight: 'bold',
-            color: '#FFFFFF',
-        },
-        editButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-        },
-        editText: {
-            color: '#FFFFFF',
-            marginLeft: 4,
-            fontWeight: '500',
-        },
-        editActions: {
-            flexDirection: 'row',
-        },
-        cancelButton: {
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            borderRadius: 20,
-            marginRight: 10,
-        },
-        saveButton: {
-            backgroundColor: '#FFFFFF',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-        },
-        cancelText: {
-            color: '#FFFFFF',
-            fontWeight: '500',
-        },
-        saveText: {
-            color: '#4A6FE1',
-            fontWeight: '600',
+            color: colors.primary.contrast,
         },
         content: {
             flex: 1,
@@ -183,45 +147,45 @@ const ProfileScreen = () => {
             height: 100,
             borderRadius: 50,
             borderWidth: 3,
-            borderColor: '#FFFFFF',
+            borderColor: colors.primary.constrast,
         },
         avatarPlaceholder: {
             width: 100,
             height: 100,
             borderRadius: 50,
-            backgroundColor: '#6C92F4',
+            backgroundColor: colors.primary.main,
             justifyContent: 'center',
             alignItems: 'center',
             borderWidth: 3,
-            borderColor: '#FFFFFF',
+            borderColor: colors.primary.contrast,
         },
         avatarText: {
             fontSize: 28,
             fontWeight: 'bold',
-            color: '#FFFFFF',
+            color: colors.primary.contrast,
         },
         cameraIconContainer: {
             position: 'absolute',
             bottom: 0,
             right: 0,
-            backgroundColor: '#4A6FE1',
+            backgroundColor: colors.primary.main,
             width: 28,
             height: 28,
             borderRadius: 14,
             justifyContent: 'center',
             alignItems: 'center',
             borderWidth: 2,
-            borderColor: '#FFFFFF',
+            borderColor: colors.primary.contrast,
         },
         userName: {
             fontSize: 22,
             fontWeight: 'bold',
-            color: '#333333',
+            color: colors.text.primary,
             marginBottom: 4,
         },
         userPromotion: {
             fontSize: 14,
-            color: '#757575',
+            color: colors.text.tertiary,
             marginBottom: 8,
         },
         userIdContainer: {
@@ -231,7 +195,7 @@ const ProfileScreen = () => {
             borderRadius: 12,
         },
         userId: {
-            color: '#4A6FE1',
+            color: colors.primary.main,
             fontWeight: '600',
             fontSize: 12,
         },
@@ -241,11 +205,11 @@ const ProfileScreen = () => {
         sectionTitle: {
             fontSize: 18,
             fontWeight: 'bold',
-            color: '#333',
+            color: colors.text.primary,
             marginBottom: 12,
         },
         card: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
             borderRadius: 12,
             padding: 5,
             elevation: 2,
@@ -255,20 +219,20 @@ const ProfileScreen = () => {
         },
         infoLabel: {
             fontSize: 12,
-            color: '#757575',
+            color: colors.text.tertiary,
             marginBottom: 4,
         },
         infoValue: {
             fontSize: 16,
-            color: '#333333',
+            color: colors.text.primary,
             fontWeight: '500',
         },
         infoInput: {
             fontSize: 16,
-            color: '#333333',
+            color: colors.text.primary,
             padding: 0,
             borderBottomWidth: 1,
-            borderBottomColor: '#4A6FE1',
+            borderBottomColor: colors.primary.main,
         },
         settingItem: {
             flexDirection: 'row',
@@ -290,7 +254,7 @@ const ProfileScreen = () => {
         },
         settingTitle: {
             fontSize: 14,
-            color: '#333333',
+            color: colors.text.primary,
             fontWeight: '500',
         },
         settingRight: {
@@ -299,14 +263,14 @@ const ProfileScreen = () => {
         },
         settingValue: {
             fontSize: 14,
-            color: '#757575',
+            color: colors.text.tertiary,
             marginRight: 6,
         },
         logoutButton: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
             borderRadius: 12,
             padding: 15,
             elevation: 2,
@@ -321,7 +285,7 @@ const ProfileScreen = () => {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.surface,
             borderRadius: 12,
             padding: 15,
             elevation: 2,
@@ -330,6 +294,7 @@ const ProfileScreen = () => {
             fontSize: 16,
             fontWeight: '600',
             marginLeft: 8,
+            color: colors.text.primary
         },
         credits: {
             marginTop: 30,
@@ -339,12 +304,12 @@ const ProfileScreen = () => {
         creditsText: {
             fontSize: 16,
             fontWeight: 'bold',
-            color: '#333333',
+            color: colors.text.primary,
             marginBottom: 5,
         },
         creditsSubtext: {
             fontSize: 12,
-            color: '#757575',
+            color: colors.text.tertiary,
             lineHeight: 18,
         },
         developerCard: {
@@ -355,7 +320,7 @@ const ProfileScreen = () => {
             width: 100,
             height: 100,
             borderRadius: 50,
-            backgroundColor: '#4A6FE1',
+            backgroundColor: colors.primary.main,
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 16,
@@ -384,7 +349,7 @@ const ProfileScreen = () => {
         socialButton: {
             padding: SPACING.sm,
             borderRadius: SPACING.sm,
-            backgroundColor: '#4A6FE120',
+            backgroundColor: colors.info.border,
         },
     });
 
@@ -394,14 +359,14 @@ const ProfileScreen = () => {
 
             {/* Header with Gradient */}
             <LinearGradient
-                colors={['#4A6FE1', '#6C92F4']}
+                colors={[colors.gradients.primary[0], colors.gradients.primary[1]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.header, { paddingTop: insets.top + 10 }]}
             >
                 <View style={styles.headerContent}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                        <Ionicons name="arrow-back" size={24} color={colors.primary.contrast} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Profil</Text>
 
@@ -455,12 +420,12 @@ const ProfileScreen = () => {
                             'notifications',
                             'Notifications',
                             preferences.notifications ? 'Activées' : 'Désactivées',
-                            () => { }, // À implémenter plus tard
+                            handleNotImplemented, // À implémenter plus tard
                             false,
                             <Switch
                                 value={userData.notificationsEnabled}
-                                onValueChange={() => { }}
-                                trackColor={{ false: '#E0E0E0', true: '#4A6FE180' }}
+                                onValueChange={handleNotImplemented}
+                                trackColor={{ false: colors.card.border, true: '#4A6FE180' }}
                                 thumbColor={userData.notificationsEnabled ? '#4A6FE1' : '#F5F5F5'}
                             />
                         )}
@@ -471,10 +436,10 @@ const ProfileScreen = () => {
                             toggleTheme,
                             false,
                             <Switch
-                                value={isDarkMode, isDarkMode}
+                                value={isDarkMode}
                                 onValueChange={toggleTheme} // toggleTheme
-                                trackColor={{ false: '#E0E0E0', true: '#4A6FE180' }}
-                                thumbColor={isDarkMode ? '#4A6FE1' : '#F5F5F5'}
+                                trackColor={{ false: colors.card.border, true: '#4A6FE180' }}
+                                thumbColor={isDarkMode ? '#4A6FE1' : colors.primary.background}
                             />
                         )}
                         {renderSettingItem('language', 'Langue', preferences.language, handleNotImplemented)}
@@ -506,13 +471,13 @@ const ProfileScreen = () => {
                                     style={styles.socialButton}
                                     onPress={() => openLink('mailto:jeanpierredupuis38@gmail.com')}
                                 >
-                                    <Ionicons name='mail-outline' size={20} />
+                                    <Ionicons name='mail-outline' size={20} color={colors.text.primary} />
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.socialButton}
                                     onPress={() => openLink('https://github.com/SkyZonDev')}
                                 >
-                                    <Ionicons name='logo-github' size={22} />
+                                    <Ionicons name='logo-github' size={22} color={colors.text.primary} />
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.socialButton}
